@@ -6,6 +6,8 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <pthread.h>
+#include <errno.h>
+#include <getopt.h>
 
 static inline void
 swap(unsigned int *x,
@@ -18,34 +20,38 @@ swap(unsigned int *x,
     }
 } __attribute__((always_inline));
 
-void
+int
 generate_array(unsigned int **array,
                int *count,
                const char *path)
 {
     int v;
-    struct stat s;
     if ((v = open(path, O_RDONLY)) == -1) {
-        perror("open");
-        exit(1);
+        fprintf(stderr, "Error error opening to %s: %s", path, strerror(errno));
+        return -1;
     }
-    if (fstat(v, &s) == -1) {
-        perror("open");
-        exit(1);
+    if (*count == 0) {
+        struct stat s;
+        if (fstat(v, &s) == -1) {
+            fprintf(stderr, "Error error getting information about %s: %s", path, strerror(errno));
+            return -1;
+        }
+        *count = s.st_size/sizeof(unsigned int);
     }
-    *count = s.st_size/sizeof(unsigned int);
     if (!(*array = malloc(*count*sizeof(unsigned int)))) {
-        perror("malloc");
-        exit(1);
+        fprintf(stderr, "Error error allocating %d bytes: %s", *count*sizeof(unsigned int), strerror(errno));
+        return -1;
     }
     if (read(v, *array, *count*sizeof(unsigned int)) < *count*sizeof(unsigned int)) {
-        perror("read");
-        exit(1);
+        fprintf(stderr, "Error error reading %d bytes from %s: %s", *count*sizeof(unsigned int), path, strerror(errno));
+        return -1;
     }
     close(v);
 
     for (v=0;v<*count;++v)
         (*array)[v] %= 10000;
+
+    return 0;
 }
 
 void
@@ -303,55 +309,106 @@ void quick_sort2_parallel(unsigned int *array,
 
 /*
   dd if=/dev/urandom of=/tmp/rnd count=1000000 bs=4
-  ./qsort QS1 /tmp/rnd /tmp/QS1
-  ./qsort QSP1 /tmp/rnd /tmp/QSP1 8
-  ./qsort QS2 /tmp/rnd /tmp/QS2
-  ./qsort QSP2 /tmp/rnd /tmp/QSP2 8
+  ./qsort --sort-variant QS1 --input-data /tmp/rnd --output-data /tmp/QS1
+  ./qsort --sort-variant QS1 --input-data /tmp/rnd --output-data /tmp/QS1P --threads 8
+  ./qsort --sort-variant QS2 --input-data /tmp/rnd --output-data /tmp/QS2
+  ./qsort --sort-variant QS2 --input-data /tmp/rnd --output-data /tmp/QS2P --threads 8
 */
+
+enum sort_variant {
+    QS1,
+    QS2
+};
+
+int
+usage(const char *prog)
+{
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, "%s --sort-variant|-s QS1|QS2 [--threads|-t <num>] [--input-data|-i <path>] [--count|-c <num>] [--output-data|-o <path>] [--print-arrays|-p]\n", prog);
+    return 1;
+}
 
 int main(int argc, char **argv)
 {
     struct timeval tb, ta;
     unsigned long secs, msecs, usecs;
 
-    int count;
+    int print_arrays = 0;
+    int sort_variant = -1;
+    int count = 0;
+    int threads = 0;
+    const char *input_data = "/dev/random", *output_data = NULL;
     unsigned int *array;
 
-    if (argc < 3) {
-        printf("%s QS1|QS2|QSP1|QSP2 /path/to/random/data [/path/to/store/sort/results] [threads]");
-        return 1;
+    int opt;
+    const struct option options[] = {
+        {"sort-variant",  required_argument, NULL, 's'},
+        {"threads",       required_argument, NULL, 't'},
+        {"input-data",    required_argument, NULL, 'i'},
+        {"output-data",   required_argument, NULL, 'o'},
+        {"count",         required_argument, NULL, 'c'},
+        {"print-arrays",  no_argument,       NULL, 'p'},
+        {0,               0,                 0,    0}
+    };
+
+    while ((opt = getopt_long(argc, argv, "s:t:i:o:c:p", options, NULL)) != -1) {
+        switch (opt) {
+            case 's':
+                if (!strncmp(optarg, "QS1", 3))
+                    sort_variant = QS1;
+                else if (!strncmp(optarg, "QS2", 3))
+                    sort_variant = QS2;
+                else
+                    return usage(argv[0]);
+                break;
+            case 'p':
+                print_arrays = 1;
+                break;
+            case 't':
+                threads = atoi(optarg);
+                break;
+            case 'c':
+                count = atoi(optarg);
+                break;
+            case 'i':
+                input_data = optarg;
+                break;
+            case 'o':
+                output_data = optarg;
+                break;
+            default:
+                return usage(argv[0]);
+        }
     }
+    if (sort_variant == -1)
+        return usage(argv[0]);
 
-    generate_array(&array, &count, argv[2]);
+    if (generate_array(&array, &count, input_data) == -1)
+        return 1;
     printf("Elements: %d\n", count);
-    /* print_array(array, count); */
+    if (print_arrays)
+        print_array(array, count);
 
-    if (!memcmp(argv[1], "QS1", 3)) {
-        printf("QS1\n");
-        gettimeofday(&tb, NULL);
-        quick_sort1(array, count);
-        gettimeofday(&ta, NULL);
-    } else if (!memcmp(argv[1], "QSP1", 4)) {
-        int threads = 2;
-        if (argc == 5)
-            threads = atoi(argv[4]);
-        printf("QSP1(%d threads)\n", threads);
-        gettimeofday(&tb, NULL);
-        quick_sort1_parallel(array, count, threads);
-        gettimeofday(&ta, NULL);
-    } else if (!memcmp(argv[1], "QS2", 3)) {
-        printf("QS2\n");
-        gettimeofday(&tb, NULL);
-        quick_sort2(array, count);
-        gettimeofday(&ta, NULL);
-    } else if (!memcmp(argv[1], "QSP2", 4)) {
-        int threads = 2;
-        if (argc == 5)
-            threads = atoi(argv[4]);
-        printf("QSP2(%d threads)\n", threads);
-        gettimeofday(&tb, NULL);
-        quick_sort2_parallel(array, count, threads);
-        gettimeofday(&ta, NULL);
+    switch (sort_variant) {
+        case QS1:
+            printf("QS1(%d threads)\n", threads);
+            gettimeofday(&tb, NULL);
+            if (threads)
+                quick_sort1_parallel(array, count, threads);
+            else
+                quick_sort1(array, count);
+            gettimeofday(&ta, NULL);
+            break;
+
+        case QS2:
+            printf("QS2(%d threads)\n", threads);
+            gettimeofday(&tb, NULL);
+            if (threads)
+                quick_sort2_parallel(array, count, threads);
+            else
+                quick_sort2(array, count);
+            gettimeofday(&ta, NULL);
+            break;
     }
 
     usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
@@ -360,17 +417,19 @@ int main(int argc, char **argv)
     msecs = usecs/1000;
     usecs %= 1000;
     printf("Sort time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
-    /* print_array(array, count); */
 
-    if (argc == 4) {
-        int d = open(argv[3], O_WRONLY|O_CREAT, 0666);
+    if (print_arrays)
+        print_array(array, count);
+
+    if (output_data) {
+        int d = open(output_data, O_WRONLY|O_CREAT, 0666);
         if (d == -1) {
-            perror("open");
+            fprintf(stderr, "Error opening %s: %s", output_data, strerror(errno));
             goto out;
         }
         ftruncate(d, 0);
         if (write(d, array, count*sizeof(unsigned int)) == -1)
-            perror("write");
+            fprintf(stderr, "Error error writing to %s: %s", output_data, strerror(errno));
         close(d);
     }
 
