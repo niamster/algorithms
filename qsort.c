@@ -307,14 +307,6 @@ void quick_sort2_parallel(unsigned int *array,
     __quick_sort2_v1(&sort_data);
 }
 
-/*
-  dd if=/dev/urandom of=/tmp/rnd count=1000000 bs=4
-  ./qsort --sort-variant QS1 --input-data /tmp/rnd --output-data /tmp/QS1
-  ./qsort --sort-variant QS1 --input-data /tmp/rnd --output-data /tmp/QS1P --threads 8
-  ./qsort --sort-variant QS2 --input-data /tmp/rnd --output-data /tmp/QS2
-  ./qsort --sort-variant QS2 --input-data /tmp/rnd --output-data /tmp/QS2P --threads 8
-*/
-
 enum sort_variant {
     QS1,
     QS2
