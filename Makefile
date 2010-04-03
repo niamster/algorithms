@@ -1,6 +1,6 @@
 CC		:= gcc
 CFLAGS	:= -O3
-ALGOS	:= $(patsubst %.c,%, $(wildcard *.c))
+ALGOS	:= $(patsubst %.c,%, $(wildcard [^_]*.c))
 LDFLAGS := -lpthread
 
 RND_U32_CNT := 1000000
@@ -18,7 +18,7 @@ endif
 
 all: $(ALGOS)
 
-qsort: qsort.c
+qsort: qsort.c __helpers.c
 	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
 .PHONY: rnd
