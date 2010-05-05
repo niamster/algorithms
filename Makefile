@@ -18,5 +18,8 @@ all: $(ALGOS)
 qsort: qsort.c
 	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
+htable: htable.c
+	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
+
 clean:
 	$(Q)rm -rf $(ALGOS)
