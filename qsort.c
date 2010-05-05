@@ -307,6 +307,11 @@ void quick_sort2_parallel(unsigned int *array,
     __quick_sort2_v1(&sort_data);
 }
 
+enum sort_variant {
+    sort_variant_qs1,
+    sort_variant_qs2
+};
+
 /*
   dd if=/dev/urandom of=/tmp/rnd count=1000000 bs=4
   ./qsort --sort-variant QS1 --input-data /tmp/rnd --output-data /tmp/QS1
@@ -315,16 +320,11 @@ void quick_sort2_parallel(unsigned int *array,
   ./qsort --sort-variant QS2 --input-data /tmp/rnd --output-data /tmp/QS2P --threads 8
 */
 
-enum sort_variant {
-    QS1,
-    QS2
-};
-
 int
 usage(const char *prog)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "%s --sort-variant|-s QS1|QS2 [--threads|-t <num>] [--input-data|-i <path>] [--count|-c <num>] [--output-data|-o <path>] [--print-arrays|-p]\n", prog);
+    fprintf(stderr, "%s --sort-variant|-s QS1|QS2 [--threads|-t <num>] [--input-data|-i <path>] [--count|-c <num>] [--output-data|-o <path>] [--dump]\n", prog);
     return 1;
 }
 
@@ -333,7 +333,7 @@ int main(int argc, char **argv)
     struct timeval tb, ta;
     unsigned long secs, msecs, usecs;
 
-    int print_arrays = 0;
+    int dump = 0;
     int sort_variant = -1;
     int count = 0;
     int threads = 0;
@@ -347,7 +347,7 @@ int main(int argc, char **argv)
         {"input-data",    required_argument, NULL, 'i'},
         {"output-data",   required_argument, NULL, 'o'},
         {"count",         required_argument, NULL, 'c'},
-        {"print-arrays",  no_argument,       NULL, 'p'},
+        {"dump",          no_argument,       &dump, 1},
         {0,               0,                 0,    0}
     };
 
@@ -355,14 +355,11 @@ int main(int argc, char **argv)
         switch (opt) {
             case 's':
                 if (!strncmp(optarg, "QS1", 3))
-                    sort_variant = QS1;
+                    sort_variant = sort_variant_qs1;
                 else if (!strncmp(optarg, "QS2", 3))
-                    sort_variant = QS2;
+                    sort_variant = sort_variant_qs2;
                 else
                     return usage(argv[0]);
-                break;
-            case 'p':
-                print_arrays = 1;
                 break;
             case 't':
                 threads = atoi(optarg);
@@ -376,6 +373,8 @@ int main(int argc, char **argv)
             case 'o':
                 output_data = optarg;
                 break;
+            case 0:
+                break;
             default:
                 return usage(argv[0]);
         }
@@ -386,11 +385,11 @@ int main(int argc, char **argv)
     if (generate_array(&array, &count, input_data) == -1)
         return 1;
     printf("Elements: %d\n", count);
-    if (print_arrays)
+    if (dump)
         print_array(array, count);
 
     switch (sort_variant) {
-        case QS1:
+        case sort_variant_qs1:
             printf("QS1(%d threads)\n", threads);
             gettimeofday(&tb, NULL);
             if (threads)
@@ -400,7 +399,7 @@ int main(int argc, char **argv)
             gettimeofday(&ta, NULL);
             break;
 
-        case QS2:
+        case sort_variant_qs2:
             printf("QS2(%d threads)\n", threads);
             gettimeofday(&tb, NULL);
             if (threads)
@@ -418,7 +417,7 @@ int main(int argc, char **argv)
     usecs %= 1000;
     printf("Sort time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
 
-    if (print_arrays)
+    if (dump)
         print_array(array, count);
 
     if (output_data) {
