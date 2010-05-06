@@ -160,7 +160,7 @@ contruct_htable(struct hash_data *data,
             continue;
         }
 
-        if (!(node = malloc(hash_size*sizeof(struct hash_node)))) {
+        if (!(node = malloc(sizeof(struct hash_node)))) {
             fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct hash_node), strerror(errno));
             return -1;
         }
@@ -218,7 +218,7 @@ search_htable(struct hash_node **hash_htable,
             goto next;
         }
 
-        if (!(needle = malloc(hash_size*sizeof(struct hash_node)))) {
+        if (!(needle = malloc(sizeof(struct hash_node)))) {
             fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct hash_node), strerror(errno));
             goto out;
         }
