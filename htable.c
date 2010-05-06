@@ -196,7 +196,8 @@ struct hash_node *
 search_htable(struct hash_node **hash_htable,
               int hash_size,
               hash_function_t hash_function,
-              const unsigned char *key)
+              const unsigned char *key,
+              int limit)
 {
     struct hash_node *result = NULL;
     struct hash_node *node;
@@ -225,6 +226,12 @@ search_htable(struct hash_node **hash_htable,
         needle->data = node->data;
         needle->next = result;
         result = needle;
+
+        if (limit != -1) {
+            --limit;
+            if (limit == 0)
+                break;
+        }
 
       next:
         node = node->next;
@@ -259,7 +266,7 @@ int
 usage(const char *prog)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "%s --hash-function|-f simple --hash-size|-s size --key|-k key [--input-data|-i <path>] [--count|-c <num>] [--dump-data] [--dump-htable] [--dump-htable-summary]\n", prog);
+    fprintf(stderr, "%s --hash-function|-f simple --hash-size|-s size --key|-k key [--limit|-l limit] [--input-data|-i <path>] [--count|-c <num>] [--dump-data] [--dump-htable] [--dump-htable-summary]\n", prog);
     return 1;
 }
 
@@ -273,16 +280,19 @@ int main(int argc, char **argv)
     int hash_size = 0;
     struct hash_node **hash_htable = NULL;
     int count = 0;
+
     const char *input_data = "/dev/random";
     struct hash_data *data;
     const unsigned char *key = NULL;
     struct hash_node *values;
+    int limit = -1;
 
     int opt;
     const struct option options[] = {
         {"hash-function", required_argument, NULL, 'f'},
         {"hash-size",     required_argument, NULL, 's'},
         {"key",           required_argument, NULL, 'k'},
+        {"limit",         required_argument, NULL, 'l'},
         {"input-data",    required_argument, NULL, 'i'},
         {"count",         required_argument, NULL, 'c'},
         {"dump-htable",    no_argument,       &dump_htable, 1},
@@ -291,7 +301,7 @@ int main(int argc, char **argv)
         {0,               0,                 0,    0}
     };
 
-    while ((opt = getopt_long(argc, argv, "f:s:k:i:c:", options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "f:s:k:l:i:c:", options, NULL)) != -1) {
         switch (opt) {
             case 'f':
                 if (!strncmp(optarg, "simple", 6))
@@ -301,6 +311,9 @@ int main(int argc, char **argv)
                 break;
             case 'k':
                 key = optarg;
+                break;
+            case 'l':
+                limit = atoi(optarg);
                 break;
             case 'c':
                 count = atoi(optarg);
@@ -333,7 +346,7 @@ int main(int argc, char **argv)
         print_htable_summary(hash_htable, hash_size, count);
 
     gettimeofday(&tb, NULL);
-    values = search_htable(hash_htable, hash_size, hash_function, key);
+    values = search_htable(hash_htable, hash_size, hash_function, key, limit);
     gettimeofday(&ta, NULL);
 
     if (values) {
