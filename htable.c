@@ -9,6 +9,9 @@
 #include <errno.h>
 #include <getopt.h>
 
+#include "helpers.h"
+#include "sllist.h"
+
 #define KEY_LEN   8
 #define VALUE_LEN 24
 
@@ -21,7 +24,7 @@ typedef int (*hash_function_t)(const char *, int limit);
 
 struct hash_node {
     struct hash_data *data;
-    struct hash_node *next;
+    struct sllist list;
 };
 
 int
@@ -91,17 +94,19 @@ print_data(struct hash_data *data,
 }
 
 void
-print_htable_entries(struct hash_node *node)
+print_htable_entries(struct hash_node *head)
 {
-    while (node) {
+    struct sllist *e;
+
+    sllist_for_each(&head->list, e) {
+        struct hash_node *node = container_of(e, struct hash_node, list);
         printf("    '%s' => '%s'\n", node->data->key, node->data->value);
-        node = node->next;
     }
 }
 
 void
-print_htable(struct hash_node **hash_htable,
-            int hash_size)
+print_htable(struct hash_node *hash_htable,
+             int hash_size)
 {
     printf("htable of %d entries\n", hash_size);
 
@@ -109,26 +114,25 @@ print_htable(struct hash_node **hash_htable,
     for (i=0;i<hash_size;++i) {
         printf("Level %d\n", i);
 
-        print_htable_entries(hash_htable[i]);
+        print_htable_entries(&hash_htable[i]);
     }
 }
 
 
 void
-print_htable_summary(struct hash_node **hash_htable,
-                    int hash_size,
-                    int count)
+print_htable_summary(struct hash_node *hash_htable,
+                     int hash_size,
+                     int count)
 {
     printf("htable of %d entries\n", hash_size);
 
     int i;
     for (i=0;i<hash_size;++i) {
-        struct hash_node *node = hash_htable[i];
         int level_count = 0;
 
-        while (node) {
+        struct sllist *e;
+        sllist_for_each(&hash_htable[i].list, e) {
             ++level_count;
-            node = node->next;
         }
 
         printf("Level %5d: %5d entries(%.2f%%)\n", i, level_count, ((float)level_count/(float)count)*100);
@@ -138,19 +142,20 @@ print_htable_summary(struct hash_node **hash_htable,
 int
 contruct_htable(struct hash_data *data,
                 int count,
-                struct hash_node ***hash_htable,
+                struct hash_node **hash_htable,
                 int hash_size,
                 hash_function_t hash_function)
 {
     int i;
 
-    if (!(*hash_htable = malloc(hash_size*sizeof(struct hash_node *)))) {
-        fprintf(stderr, "Error error allocating %d bytes: %s", hash_size*sizeof(struct hash_node *), strerror(errno));
+    if (!(*hash_htable = malloc(hash_size*sizeof(struct hash_node)))) {
+        fprintf(stderr, "Error error allocating %d bytes: %s", hash_size*sizeof(struct hash_node), strerror(errno));
         return -1;
     }
 
-    for (i=0;i<hash_size;++i)
-        (*hash_htable)[i] = NULL;
+    for (i=0;i<hash_size;++i) {
+        sllist_init(&(*hash_htable)[i].list);
+    }
 
     for (i=0;i<count;++i) {
         struct hash_node *node = NULL;
@@ -166,79 +171,72 @@ contruct_htable(struct hash_data *data,
         }
 
         node->data = &data[i];
-        node->next = (*hash_htable)[hash];
-        (*hash_htable)[hash] = node;
+        sllist_add(&(*hash_htable)[hash].list, &node->list);
     }
 }
 
 void
-destroy_htable_entries(struct hash_node *node)
+destroy_htable_entries(struct hash_node *head)
 {
-    while (node) {
-        struct hash_node *n = node;
-        node = node->next;
-        free(n);
+    struct sllist *e, *p, *t;
+    sllist_for_each_safe_prev(&head->list, e, p, t) {
+        struct hash_node *node = container_of(e, struct hash_node, list);
+        sllist_detach(e, p);
+        free(node);
     }
 }
 
 void
-destroy_htable(struct hash_node **hash_htable,
-                    int hash_size)
+destroy_htable(struct hash_node *hash_htable,
+               int hash_size)
 {
     int i;
     for (i=0;i<hash_size;++i)
-        destroy_htable_entries(hash_htable[i]);
+        destroy_htable_entries(&hash_htable[i]);
 
     free(hash_htable);
 }
 
-struct hash_node *
-search_htable(struct hash_node **hash_htable,
+void
+search_htable(struct hash_node *hash_htable,
               int hash_size,
               hash_function_t hash_function,
               const unsigned char *key,
+              struct hash_node *result,
               int limit)
 {
-    struct hash_node *result = NULL;
-    struct hash_node *node;
+    struct sllist *e;
+
     int hash = hash_function(key, hash_size-1);
     if (hash >= hash_size) { /* sanity checks */
         fprintf(stderr, "Invalid hash: %d for %s\n", hash, key);
-        return NULL;
+        return;
     }
 
-    node = hash_htable[hash];
-
-    while (node) {
+    sllist_for_each (&hash_htable[hash].list, e) {
         struct hash_node *needle;
+        struct hash_node *node = container_of(e, struct hash_node, list);
 
         if (!key) {
             if (node->data->key)
-                goto next;
+                continue;
         } else if (strcmp(key, node->data->key)) {
-            goto next;
+            continue;
         }
 
         if (!(needle = malloc(sizeof(struct hash_node)))) {
             fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct hash_node), strerror(errno));
-            goto out;
+            break;
         }
         needle->data = node->data;
-        needle->next = result;
-        result = needle;
+        sllist_add(&result->list, &needle->list);
 
         if (limit != -1) {
             --limit;
             if (limit == 0)
                 break;
         }
-
-      next:
-        node = node->next;
     }
-
-  out:
-    return result;
 }
 
 int
@@ -278,13 +276,13 @@ int main(int argc, char **argv)
     int dump_data = 0, dump_htable = 0, dump_htable_summary = 0;
     hash_function_t hash_function = NULL;
     int hash_size = 0;
-    struct hash_node **hash_htable = NULL;
+    struct hash_node *hash_htable = NULL;
     int count = 0;
 
     const char *input_data = "/dev/random";
     struct hash_data *data;
     const unsigned char *key = NULL;
-    struct hash_node *values;
+    struct hash_node values;
     int limit = -1;
 
     int opt;
@@ -339,20 +337,30 @@ int main(int argc, char **argv)
     if (dump_data)
         print_data(data, count);
 
+    gettimeofday(&tb, NULL);
     contruct_htable(data, count, &hash_htable, hash_size, hash_function);
+    gettimeofday(&ta, NULL);
+    usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
+    secs = usecs/1000000;
+    usecs %= 1000000;
+    msecs = usecs/1000;
+    usecs %= 1000;
+    printf("Construct time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
+
     if (dump_htable)
         print_htable(hash_htable, hash_size);
     if (dump_htable_summary)
         print_htable_summary(hash_htable, hash_size, count);
 
+    sllist_init(&values.list);
     gettimeofday(&tb, NULL);
-    values = search_htable(hash_htable, hash_size, hash_function, key, limit);
+    search_htable(hash_htable, hash_size, hash_function, key, &values, limit);
     gettimeofday(&ta, NULL);
 
-    if (values) {
+    if (!sllist_empty(&values.list)) {
         printf("Entries for key '%s'\n", key);
-        print_htable_entries(values);
-        destroy_htable_entries(values);
+        print_htable_entries(&values);
+        destroy_htable_entries(&values);
     } else {
         printf("Value was not found for key '%s'\n", key);
     }

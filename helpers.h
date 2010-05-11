@@ -1,4 +1,3 @@
-
 #ifndef _HELPERS_H_
 #define _HELPERS_H_
 
@@ -15,5 +14,8 @@ swap(unsigned int *x, unsigned int *y)
         *x ^= *y;
     }
 } __attribute__((always_inline));
+
+#define container_of(ptr, type, member)         \
+    (type *)((char *)ptr - (unsigned int)(&((type *)0)->member))
 
 #endif
