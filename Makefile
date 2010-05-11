@@ -1,6 +1,6 @@
 CC		:= gcc
 CFLAGS	:= -O3
-ALGOS	:= $(patsubst %.c,%, $(wildcard [^_]*.c))
+ALGOS	:= qsort htable-list
 LDFLAGS := -lpthread
 
 RND_U32_CNT := 1000000
@@ -24,8 +24,8 @@ all: $(ALGOS)
 qsort: qsort.c __helpers.c
 	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
-htable: htable.c
-	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
+htable-list: htable.c
+	$(Q)$(CC) $^ -DHTABLE_LIST $(CFLAGS) -o $@ $(LDFLAGS)
 
 .PHONY: rnd.u32 rnd.32b
 rnd.u32:

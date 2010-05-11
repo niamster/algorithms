@@ -10,7 +10,11 @@
 #include <getopt.h>
 
 #include "helpers.h"
+#ifdef HTABLE_LIST
 #include "sllist.h"
+#else
+#error Unknown storage type for handling hash table data
+#endif
 
 #define KEY_LEN   8
 #define VALUE_LEN 24
@@ -24,7 +28,9 @@ typedef int (*hash_function_t)(const char *, int limit);
 
 struct hash_node {
     struct hash_data *data;
+#ifdef HTABLE_LIST
     struct sllist list;
+#endif
 };
 
 int
@@ -96,12 +102,14 @@ print_data(struct hash_data *data,
 void
 print_htable_entries(struct hash_node *head)
 {
+#ifdef HTABLE_LIST
     struct sllist *e;
 
     sllist_for_each(&head->list, e) {
         struct hash_node *node = container_of(e, struct hash_node, list);
         printf("    '%s' => '%s'\n", node->data->key, node->data->value);
     }
+#endif
 }
 
 void
@@ -130,10 +138,12 @@ print_htable_summary(struct hash_node *hash_htable,
     for (i=0;i<hash_size;++i) {
         int level_count = 0;
 
+#ifdef HTABLE_LIST
         struct sllist *e;
         sllist_for_each(&hash_htable[i].list, e) {
             ++level_count;
         }
+#endif
 
         printf("Level %5d: %5d entries(%.2f%%)\n", i, level_count, ((float)level_count/(float)count)*100);
     }
@@ -154,7 +164,9 @@ contruct_htable(struct hash_data *data,
     }
 
     for (i=0;i<hash_size;++i) {
+#ifdef HTABLE_LIST
         sllist_init(&(*hash_htable)[i].list);
+#endif
     }
 
     for (i=0;i<count;++i) {
@@ -171,19 +183,23 @@ contruct_htable(struct hash_data *data,
         }
 
         node->data = &data[i];
+#ifdef HTABLE_LIST
         sllist_add(&(*hash_htable)[hash].list, &node->list);
+#endif
     }
 }
 
 void
 destroy_htable_entries(struct hash_node *head)
 {
+#ifdef HTABLE_LIST
     struct sllist *e, *p, *t;
     sllist_for_each_safe_prev(&head->list, e, p, t) {
         struct hash_node *node = container_of(e, struct hash_node, list);
         sllist_detach(e, p);
         free(node);
     }
+#endif
 }
 
 void
@@ -205,7 +221,9 @@ search_htable(struct hash_node *hash_htable,
               struct hash_node *result,
               int limit)
 {
+#ifdef HTABLE_LIST
     struct sllist *e;
+#endif
 
     int hash = hash_function(key, hash_size-1);
     if (hash >= hash_size) { /* sanity checks */
@@ -213,6 +231,7 @@ search_htable(struct hash_node *hash_htable,
         return;
     }
 
+#ifdef HTABLE_LIST
     sllist_for_each (&hash_htable[hash].list, e) {
         struct hash_node *needle;
         struct hash_node *node = container_of(e, struct hash_node, list);
@@ -237,6 +256,7 @@ search_htable(struct hash_node *hash_htable,
                 break;
         }
     }
+#endif
 }
 
 int
@@ -352,11 +372,15 @@ int main(int argc, char **argv)
     if (dump_htable_summary)
         print_htable_summary(hash_htable, hash_size, count);
 
+#ifdef HTABLE_LIST
     sllist_init(&values.list);
+#endif
+
     gettimeofday(&tb, NULL);
     search_htable(hash_htable, hash_size, hash_function, key, &values, limit);
     gettimeofday(&ta, NULL);
 
+#ifdef HTABLE_LIST
     if (!sllist_empty(&values.list)) {
         printf("Entries for key '%s'\n", key);
         print_htable_entries(&values);
@@ -364,6 +388,7 @@ int main(int argc, char **argv)
     } else {
         printf("Value was not found for key '%s'\n", key);
     }
+#endif
 
     usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
     secs = usecs/1000000;
