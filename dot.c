@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "dot.h"
@@ -91,7 +92,7 @@ void __dot_dump_sllist_node(FILE *out,
         fprintf(out, "        %s_%u_%u -> %s_%u_%u;\n", label, idx, id-1, label, idx, id);
     }
     if (node->next == head) {
-        fprintf(out, "        %s_%u_%u -> %s_%u_%u;\n", label, idx, id, label, idx, 1);
+        fprintf(out, "        %s_%u_%u -> %s_%u_%u;\n", label, idx, id, label, idx, 0);
     }
 
     free(escaped_name);
