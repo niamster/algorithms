@@ -139,9 +139,13 @@ dump_htable_graph(const char *graph,
         return;
 
     dot_dump_begin(out, "htable");
+    dot_dump_table(out, "htable", hash_size);
     for (i=0;i<hash_size;++i) {
 #ifdef HTABLE_LIST
-        dot_dump_sllist(out, i, &hash_table[i], list, data->key, data->value);
+        if (!sllist_empty(&hash_table[i].list)) {
+            dot_dump_sllist(out, "list", i, &hash_table[i], list, data->key, data->value);
+            dot_dump_table_link_to_list(out, "htable", i, "list", i);
+        }
 #endif
     }
     dot_dump_end(out);
