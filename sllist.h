@@ -12,6 +12,11 @@ struct sllist {
          (e)!=(head);                                            \
          (e)=(e)->next)
 
+#define sllist_for_each_prev(head, e, p)                         \
+    for ((p)=(head), (e)=(head)->next;                           \
+         (e)!=(head);                                            \
+         (p)=(e), (e)=(e)->next)
+
 #define sllist_for_each_safe(head, e, t)                         \
     for ((e)=(head)->next, (t)=(head)->next->next;               \
          (e)!=(head);                                            \
