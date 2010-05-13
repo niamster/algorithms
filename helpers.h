@@ -13,9 +13,9 @@ swap(unsigned int *x, unsigned int *y)
         *y ^= *x;
         *x ^= *y;
     }
-} __attribute__((always_inline));
+}
 
-#define container_of(ptr, type, member)         \
+#define container_of(ptr, type, member)                             \
     (type *)((char *)ptr - (unsigned int)(&((type *)0)->member))
 
 #endif

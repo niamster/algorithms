@@ -19,12 +19,14 @@ else
 Q := @
 endif
 
+HELPERS = __helpers.c dot.c
+
 all: $(ALGOS)
 
-qsort: qsort.c __helpers.c
+qsort: qsort.c $(HELPERS)
 	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
-htable-list: htable.c
+htable-list: htable.c $(HELPERS)
 	$(Q)$(CC) $^ -DHTABLE_LIST $(CFLAGS) -o $@ $(LDFLAGS)
 
 .PHONY: rnd.u32 rnd.32b
