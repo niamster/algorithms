@@ -10,6 +10,7 @@
 #include <getopt.h>
 
 #include "helpers.h"
+#include "dot.h"
 #ifdef HTABLE_LIST
 #include "sllist.h"
 #else
@@ -113,7 +114,7 @@ print_htable_entries(struct hash_node *head)
 }
 
 void
-print_htable(struct hash_node *hash_htable,
+print_htable(struct hash_node *hash_table,
              int hash_size)
 {
     printf("htable of %d entries\n", hash_size);
@@ -122,13 +123,38 @@ print_htable(struct hash_node *hash_htable,
     for (i=0;i<hash_size;++i) {
         printf("Level %d\n", i);
 
-        print_htable_entries(&hash_htable[i]);
+        print_htable_entries(&hash_table[i]);
     }
 }
 
+void
+dump_htable_graph(const char *graph,
+                  struct hash_node *hash_table,
+                  int hash_size)
+{
+    int i;
+    FILE *out = fopen(graph, "w+");
+
+    if (!out)
+        return;
+
+    dot_dump_begin(out, "htable");
+    dot_dump_table(out, "htable", hash_size);
+    for (i=0;i<hash_size;++i) {
+#ifdef HTABLE_LIST
+        if (!sllist_empty(&hash_table[i].list)) {
+            dot_dump_sllist(out, "list", i, &hash_table[i], list, data->key, data->value);
+            dot_dump_table_link_to_list(out, "htable", i, "list", i);
+        }
+#endif
+    }
+    dot_dump_end(out);
+
+    fclose(out);
+}
 
 void
-print_htable_summary(struct hash_node *hash_htable,
+print_htable_summary(struct hash_node *hash_table,
                      int hash_size,
                      int count)
 {
@@ -140,7 +166,7 @@ print_htable_summary(struct hash_node *hash_htable,
 
 #ifdef HTABLE_LIST
         struct sllist *e;
-        sllist_for_each(&hash_htable[i].list, e) {
+        sllist_for_each(&hash_table[i].list, e) {
             ++level_count;
         }
 #endif
@@ -152,20 +178,20 @@ print_htable_summary(struct hash_node *hash_htable,
 int
 contruct_htable(struct hash_data *data,
                 int count,
-                struct hash_node **hash_htable,
+                struct hash_node **hash_table,
                 int hash_size,
                 hash_function_t hash_function)
 {
     int i;
 
-    if (!(*hash_htable = malloc(hash_size*sizeof(struct hash_node)))) {
+    if (!(*hash_table = malloc(hash_size*sizeof(struct hash_node)))) {
         fprintf(stderr, "Error error allocating %d bytes: %s", hash_size*sizeof(struct hash_node), strerror(errno));
         return -1;
     }
 
     for (i=0;i<hash_size;++i) {
 #ifdef HTABLE_LIST
-        sllist_init(&(*hash_htable)[i].list);
+        sllist_init(&(*hash_table)[i].list);
 #endif
     }
 
@@ -184,7 +210,7 @@ contruct_htable(struct hash_data *data,
 
         node->data = &data[i];
 #ifdef HTABLE_LIST
-        sllist_add(&(*hash_htable)[hash].list, &node->list);
+        sllist_add(&(*hash_table)[hash].list, &node->list);
 #endif
     }
 }
@@ -203,18 +229,18 @@ destroy_htable_entries(struct hash_node *head)
 }
 
 void
-destroy_htable(struct hash_node *hash_htable,
+destroy_htable(struct hash_node *hash_table,
                int hash_size)
 {
     int i;
     for (i=0;i<hash_size;++i)
-        destroy_htable_entries(&hash_htable[i]);
+        destroy_htable_entries(&hash_table[i]);
 
-    free(hash_htable);
+    free(hash_table);
 }
 
 void
-search_htable(struct hash_node *hash_htable,
+search_htable(struct hash_node *hash_table,
               int hash_size,
               hash_function_t hash_function,
               const unsigned char *key,
@@ -232,7 +258,7 @@ search_htable(struct hash_node *hash_htable,
     }
 
 #ifdef HTABLE_LIST
-    sllist_for_each (&hash_htable[hash].list, e) {
+    sllist_for_each (&hash_table[hash].list, e) {
         struct hash_node *needle;
         struct hash_node *node = container_of(e, struct hash_node, list);
 
@@ -284,7 +310,7 @@ int
 usage(const char *prog)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "%s --hash-function|-f simple --hash-size|-s size --key|-k key [--limit|-l limit] [--input-data|-i <path>] [--count|-c <num>] [--dump-data] [--dump-htable] [--dump-htable-summary]\n", prog);
+    fprintf(stderr, "%s --hash-function|-f simple --hash-size|-s size --key|-k key [--limit|-l limit] [--input-data|-i <path>] [--count|-c <num>] [--dump-data] [--dump-htable] [--dump-htable-summary] [--graph|-g <path>]\n", prog);
     return 1;
 }
 
@@ -296,7 +322,7 @@ int main(int argc, char **argv)
     int dump_data = 0, dump_htable = 0, dump_htable_summary = 0;
     hash_function_t hash_function = NULL;
     int hash_size = 0;
-    struct hash_node *hash_htable = NULL;
+    struct hash_node *hash_table = NULL;
     int count = 0;
 
     const char *input_data = "/dev/random";
@@ -304,6 +330,7 @@ int main(int argc, char **argv)
     const unsigned char *key = NULL;
     struct hash_node values;
     int limit = -1;
+    const char *graph = NULL;
 
     int opt;
     const struct option options[] = {
@@ -316,10 +343,11 @@ int main(int argc, char **argv)
         {"dump-htable",    no_argument,       &dump_htable, 1},
         {"dump-htable-summary",  no_argument, &dump_htable_summary, 1},
         {"dump-data",     no_argument,       &dump_data, 1},
+        {"graph",         required_argument, NULL, 'g'},
         {0,               0,                 0,    0}
     };
 
-    while ((opt = getopt_long(argc, argv, "f:s:k:l:i:c:", options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "f:s:k:l:i:c:g:", options, NULL)) != -1) {
         switch (opt) {
             case 'f':
                 if (!strncmp(optarg, "simple", 6))
@@ -342,6 +370,9 @@ int main(int argc, char **argv)
             case 'i':
                 input_data = optarg;
                 break;
+            case 'g':
+                graph = optarg;
+                break;
             case 0:
                 break;
             default:
@@ -358,7 +389,7 @@ int main(int argc, char **argv)
         print_data(data, count);
 
     gettimeofday(&tb, NULL);
-    contruct_htable(data, count, &hash_htable, hash_size, hash_function);
+    contruct_htable(data, count, &hash_table, hash_size, hash_function);
     gettimeofday(&ta, NULL);
     usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
     secs = usecs/1000000;
@@ -368,16 +399,16 @@ int main(int argc, char **argv)
     printf("Construct time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
 
     if (dump_htable)
-        print_htable(hash_htable, hash_size);
+        print_htable(hash_table, hash_size);
     if (dump_htable_summary)
-        print_htable_summary(hash_htable, hash_size, count);
+        print_htable_summary(hash_table, hash_size, count);
 
 #ifdef HTABLE_LIST
     sllist_init(&values.list);
 #endif
 
     gettimeofday(&tb, NULL);
-    search_htable(hash_htable, hash_size, hash_function, key, &values, limit);
+    search_htable(hash_table, hash_size, hash_function, key, &values, limit);
     gettimeofday(&ta, NULL);
 
 #ifdef HTABLE_LIST
@@ -397,9 +428,13 @@ int main(int argc, char **argv)
     usecs %= 1000;
     printf("Search time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
 
+    if (graph) {
+        dump_htable_graph(graph, hash_table, hash_size);
+    }
+
   out:
     free(data);
-    destroy_htable(hash_htable, hash_size);
+    destroy_htable(hash_table, hash_size);
 
     return 0;
 }
