@@ -36,9 +36,9 @@ rnd-32b:
 	$(Q)dd if=/dev/urandom of=$(RND_32B_OUT) bs=$(RND_32B_CNT) count=32 &>/dev/null
 
 test-htable-list: htable-list
-	$(Q)dd if=/dev/urandom of=rnd.32b.100 bs=100 count=32 &>/dev/null
-	./htable-list -f simple -s 10 -i 32b.100.rnd -g graph.100.dot
-	dot -Tpng -o htable-list.100.png graph.100.dot
+	$(Q)dd if=/dev/urandom of=32b.100.rnd bs=100 count=32 &>/dev/null
+	$(Q)./htable-list -f simple -s 10 -i 32b.100.rnd -g graph.100.dot
+	$(Q)dot -Tpng -o htable-list.100.png graph.100.dot
 
 clean:
 	$(Q)rm -rf $(ALGOS)
