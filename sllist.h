@@ -5,6 +5,11 @@ struct sllist {
     struct sllist *next;
 };
 
+#define sllist_init(list)                                               \
+    do {                                                                \
+        (list)->next = (list);                                          \
+    } while (0)
+
 #define sllist_empty(head) ((head)->next == (head))
 
 #define sllist_for_each(head, e)                                 \
@@ -26,11 +31,6 @@ struct sllist {
     for ((p)=(head), (e)=(head)->next, (t)=(head)->next->next;   \
          (e)!=(head);                                            \
          (p)=((t)==(head)->next?(head):(e)), (e)=(t), (t)=(t)->next)
-
-#define sllist_init(list)                                               \
-    do {                                                                \
-        (list)->next = (list);                                          \
-    } while (0)
 
 #define sllist_detach(e, prev)                                          \
     do {                                                                \

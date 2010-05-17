@@ -6,6 +6,11 @@ struct dllist {
     struct dllist *prev;
 };
 
+#define dllist_init(list)                       \
+    do {                                        \
+        (list)->next = (list)->prev = (list);   \
+    } while (0)
+
 #define dllist_empy(head) ((head)->next == (head) && (head)->prev == (head))
 
 #define dllist_for_each(head, e)                \
@@ -17,11 +22,6 @@ struct dllist {
     for ((t)=(head)->next->next, (e)=(t)->prev; \
          (e)!=(head);                           \
          (t)=(t)->next, (e)=(t)->prev)
-
-#define dllist_init(list)                       \
-    do {                                        \
-        (list)->next = (list)->prev = (list);   \
-    } while (0)
 
 #define dllist_detach(e)                        \
     do {                                        \
