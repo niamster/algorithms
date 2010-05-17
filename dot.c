@@ -63,14 +63,14 @@ void dot_dump_table_link_to_list(FILE *out,
     fprintf(out, "    \"%s\":%s_%d -> %s_%d_0;\n", label, label, id, dst_label, dst_id);
 }
 
-void __dot_dump_sllist_header(FILE *out,
-                              const char *label,
-                              unsigned int idx)
+void __dot_dump_header(FILE *out,
+                       const char *label,
+                       unsigned int idx)
 {
     fprintf(out, "    subgraph %s%u {\n", label, idx);
 }
 
-void __dot_dump_sllist_footer(FILE *out)
+void __dot_dump_footer(FILE *out)
 {
     fprintf(out, "    }\n");
 }
@@ -78,22 +78,20 @@ void __dot_dump_sllist_footer(FILE *out)
 void __dot_dump_sllist_node(FILE *out,
                             const char *label,
                             unsigned int idx,
-                            unsigned int id,
+                            unsigned int pos,
                             struct sllist *head,
                             struct sllist *node,
-                            struct sllist *prev,
-                            const char *name,
-                            const char *value)
+                            const char *name)
 {
-    char *escaped_name = escape_quotes(name);
+    char *_name = escape_quotes(name);
 
-    fprintf(out, "        %s_%u_%u [label=\"%s\"];\n", label, idx, id, escaped_name);
-    if (prev != head) {
-        fprintf(out, "        %s_%u_%u -> %s_%u_%u;\n", label, idx, id-1, label, idx, id);
+    fprintf(out, "        %s_%u_%u [label=\"%s\"];\n", label, idx, pos, _name);
+    if (pos > 0) {
+        fprintf(out, "        %s_%u_%u -> %s_%u_%u;\n", label, idx, pos-1, label, idx, pos);
     }
     if (node->next == head) {
-        fprintf(out, "        %s_%u_%u -> %s_%u_%u;\n", label, idx, id, label, idx, 0);
+        fprintf(out, "        %s_%u_%u -> %s_%u_%u;\n", label, idx, pos, label, idx, 0);
     }
 
-    free(escaped_name);
+    free(_name);
 }
