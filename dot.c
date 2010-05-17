@@ -54,7 +54,7 @@ void dot_dump_table(FILE *out,
     fprintf(out, "    ];\n");
 }
 
-void dot_dump_table_link_to_list(FILE *out,
+void dot_dump_link_table_to_node(FILE *out,
                                  const char *label,
                                  int id,
                                  const char *dst_label,
