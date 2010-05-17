@@ -5,6 +5,13 @@
 #include "dot.h"
 #include "sllist.h"
 
+static char *dot_graph_directions[] = {
+    [dot_graph_direction_left_to_right] = "LR",
+    [dot_graph_direction_right_to_left] = "RL",
+    [dot_graph_direction_top_to_bottom] = "TB",
+    [dot_graph_direction_bottom_to_top] = "BT"
+};
+
 char *
 escape_quotes(const char *str)
 {
@@ -26,19 +33,23 @@ escape_quotes(const char *str)
     return new;
 }
 
-void dot_dump_begin(FILE *out,
-                    const char *label)
+void
+dot_dump_begin(FILE *out,
+               const char *label,
+               dot_graph_direction_t direction)
 {
     fprintf(out, "digraph %s {\n", label);
-    fprintf(out, "    graph [center rankdir=LR]\n");
+    fprintf(out, "    graph [center rankdir=%s]\n", dot_graph_directions[direction]);
 }
 
-void dot_dump_end(FILE *out)
+void
+dot_dump_end(FILE *out)
 {
     fprintf(out, "}\n");
 }
 
-void dot_dump_table(FILE *out,
+void
+dot_dump_table(FILE *out,
                     const char *label,
                     int size)
 {
@@ -54,34 +65,61 @@ void dot_dump_table(FILE *out,
     fprintf(out, "    ];\n");
 }
 
-void dot_dump_link_table_to_node(FILE *out,
-                                 const char *label,
-                                 int id,
-                                 const char *dst_label,
-                                 int dst_id)
+void
+dot_dump_link_table_to_sllist_head(FILE *out,
+                                   const char *src_label,
+                                   int src_id,
+                                   const char *dst_label,
+                                   int dst_id)
 {
-    fprintf(out, "    \"%s\":%s_%d -> %s_%d_0;\n", label, label, id, dst_label, dst_id);
+    fprintf(out, "    \"%s\":%s_%d -> %s_%d_0;\n", src_label, src_label, src_id, dst_label, dst_id);
 }
 
-void __dot_dump_header(FILE *out,
-                       const char *label,
-                       unsigned int idx)
+void
+dot_dump_link_node_to_node(FILE *out,
+                           const char *src_label,
+                           int src_id,
+                           const char *dst_label,
+                           int dst_id)
+{
+    fprintf(out, "    %s_%d -> %s_%d;\n", src_label, src_id, dst_label, dst_id);
+}
+
+void
+dot_dump_node(FILE *out,
+              const char *label,
+              int id,
+              const char *name)
+{
+    char *_name = escape_quotes(name);
+
+    fprintf(out, "    %s_%d [label=\"%s\"];\n", label, id, _name);
+
+    free(_name);
+}
+
+void
+__dot_dump_header(FILE *out,
+                  const char *label,
+                  unsigned int idx)
 {
     fprintf(out, "    subgraph %s%u {\n", label, idx);
 }
 
-void __dot_dump_footer(FILE *out)
+void
+__dot_dump_footer(FILE *out)
 {
     fprintf(out, "    }\n");
 }
 
-void __dot_dump_sllist_node(FILE *out,
-                            const char *label,
-                            unsigned int idx,
-                            unsigned int pos,
-                            struct sllist *head,
-                            struct sllist *node,
-                            const char *name)
+void
+__dot_dump_sllist_node(FILE *out,
+                       const char *label,
+                       unsigned int idx,
+                       unsigned int pos,
+                       struct sllist *head,
+                       struct sllist *node,
+                       const char *name)
 {
     char *_name = escape_quotes(name);
 

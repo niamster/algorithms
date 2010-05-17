@@ -6,18 +6,38 @@
 #include "sllist.h"
 #include "helpers.h"
 
+typedef enum {
+    dot_graph_direction_left_to_right,
+    dot_graph_direction_right_to_left,
+    dot_graph_direction_top_to_bottom,
+    dot_graph_direction_bottom_to_top,
+} dot_graph_direction_t;
+
 void dot_dump_begin(FILE *out,
-                    const char *label);
+                    const char *label,
+                    dot_graph_direction_t direction);
 void dot_dump_end(FILE *out);
 
 void dot_dump_table(FILE *out,
                     const char *label,
                     int size);
-void dot_dump_link_table_to_node(FILE *out,
-                                 const char *label,
-                                 int id,
-                                 const char *dst_label,
-                                 int dst_id);
+
+void dot_dump_link_table_to_sllist_head(FILE *out,
+                                        const char *src_label,
+                                        int src_id,
+                                        const char *dst_label,
+                                        int dst_id);
+
+void dot_dump_link_node_to_node(FILE *out,
+                                const char *src_label,
+                                int src_id,
+                                const char *dst_label,
+                                int dst_id);
+
+void dot_dump_node(FILE *out,
+                   const char *label,
+                   int id,
+                   const char *name);
 
 #define dot_dump_sllist(out, label, idx, head, type, member, name)      \
     do {                                                                \
