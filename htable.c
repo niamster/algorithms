@@ -60,13 +60,13 @@ dump_htable_graph(const char *graph,
     if (!out)
         return;
 
-    dot_dump_begin(out, "htable");
+    dot_dump_begin(out, "htable", dot_graph_direction_left_to_right);
     dot_dump_table(out, "htable", hash_size);
     for (i=0;i<hash_size;++i) {
 #ifdef HTABLE_LIST
         if (!sllist_empty(&hash_table[i])) {
             dot_dump_sllist(out, "list", i, &hash_table[i], struct hash_node, list, data->key);
-            dot_dump_link_table_to_node(out, "htable", i, "list", i);
+            dot_dump_link_table_to_sllist_head(out, "htable", i, "list", i);
         }
 #endif
     }
