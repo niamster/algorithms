@@ -1,11 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <sys/time.h>
-#include <sys/stat.h>
-#include <pthread.h>
 #include <errno.h>
 #include <getopt.h>
 
@@ -17,14 +13,6 @@
 #error Unknown storage type for handling hash table data
 #endif
 
-#define KEY_LEN   8
-#define VALUE_LEN 24
-
-struct hash_data {
-    unsigned char key[KEY_LEN];
-    unsigned char value[VALUE_LEN];
-};
-
 typedef int (*hash_function_t)(const char *, int limit);
 
 struct hash_node {
@@ -33,72 +21,6 @@ struct hash_node {
     struct sllist list;
 #endif
 };
-
-int
-generate_data(struct hash_data **data,
-              int *count,
-              const char *path)
-{
-    int v;
-    if ((v = open(path, O_RDONLY)) == -1) {
-        fprintf(stderr, "Error error opening to %s: %s", path, strerror(errno));
-        return -1;
-    }
-    if (*count == 0) {
-        struct stat s;
-        if (fstat(v, &s) == -1) {
-            fprintf(stderr, "Error error getting information about %s: %s", path, strerror(errno));
-            return -1;
-        }
-        *count = s.st_size/sizeof(struct hash_data);
-    }
-    if (!(*data = malloc(*count*sizeof(struct hash_data)))) {
-        fprintf(stderr, "Error error allocating %d bytes: %s", *count*sizeof(struct hash_data), strerror(errno));
-        return -1;
-    }
-    if (read(v, *data, *count*sizeof(struct hash_data)) < *count*sizeof(struct hash_data)) {
-        fprintf(stderr, "Error error reading %d bytes from %s: %s", *count*sizeof(struct hash_data), path, strerror(errno));
-        return -1;
-    }
-    close(v);
-
-    for (v=0;v<*count;++v) {
-        unsigned char *d;
-
-        d = (*data)[v].key;
-        d[KEY_LEN-1] = '\0';
-        while (*d) {
-            if (*d >= 0x80)
-                *d -= 0x80;
-            if (*d < 0x20)
-                *d += 0x20;
-            else if (*d > 0x7e)
-                *d -= 0x7e - 0x20;
-            ++d;
-        }
-
-        d = (*data)[v].value;
-        d[VALUE_LEN-1] = '\0';
-        while (*d) {
-            if (*d >= 0x80)
-                *d -= 0x80;
-            if (*d < 0x20)
-                *d += 0x20;
-            else if (*d > 0x7e)
-                *d -= 0x7e - 0x20;
-            ++d;
-        }
-    }
-
-    return 0;
-}
-
-void
-print_data(struct hash_data *data,
-           int count)
-{
-    printf("data of %d elements\n", count);
-}
 
 void
 print_htable_entries(struct hash_node *head)
@@ -298,12 +220,12 @@ simple_hash(const char *data,
 	while (c = *data++)
 	    hash += c;
 
-	return hash % limit;
+	return hash % (limit + 1);
 }
 
 /*
   dd if=/dev/urandom of=/tmp/rnd count=1000000 bs=32
-  ./htable --hash-function simple --input-data /tmp/rnd
+  ./htable-list --hash-function simple --input-data /tmp/rnd
 */
 
 int
@@ -326,7 +248,7 @@ int main(int argc, char **argv)
     int count = 0;
 
     const char *input_data = "/dev/random";
-    struct hash_data *data;
+    struct key_value *data;
     const unsigned char *key = NULL;
     struct hash_node values;
     int limit = -1;
@@ -382,11 +304,11 @@ int main(int argc, char **argv)
     if (hash_function == NULL || hash_size == 0)
         return usage(argv[0]);
 
-    if (generate_data(&data, &count, input_data) == -1)
+    if (generate_key_value(&data, &count, input_data) == -1)
         return 1;
     printf("Elements: %d\n", count);
     if (dump_data)
-        print_data(data, count);
+        print_key_value(data, count);
 
     gettimeofday(&tb, NULL);
     contruct_htable(data, count, &hash_table, hash_size, hash_function);
