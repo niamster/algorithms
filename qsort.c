@@ -292,7 +292,7 @@ int main(int argc, char **argv)
         {0,               0,                 0,    0}
     };
 
-    while ((opt = getopt_long(argc, argv, "s:t:i:o:c:p", options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "s:t:i:o:c:", options, NULL)) != -1) {
         switch (opt) {
             case 's':
                 if (!strncmp(optarg, "QS1", 3))
