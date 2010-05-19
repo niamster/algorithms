@@ -223,7 +223,7 @@ destroy_binary_tree(struct binary_tree *root)
     if (binary_tree_empty_root(root))
         return;
 
-    r = binary_tree_root_node(root)?root->left:root;
+    r = binary_tree_node(root);
     n = container_of(r, struct binary_tree_node, tree);
 
     if (r->left != BINARY_TREE_EMPTY_BRANCH)
