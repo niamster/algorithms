@@ -17,7 +17,7 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
 
 #define BINARY_TREE_DIRECTION_LEFT(res) ((res) == cmp_result_less)
 #define BINARY_TREE_DIRECTION_RIGHT(res) ((res) == cmp_result_greater || (res) == cmp_result_equal)
-#define BINARY_TREE_EMPTY_BRANCH ((struct binary_tree *)0xB174EE00)
+#define BINARY_TREE_EMPTY_BRANCH ((struct binary_tree *)NULL)
 
 #define binary_tree_init_root(root)             \
     do {                                        \
