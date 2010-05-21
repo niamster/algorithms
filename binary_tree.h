@@ -24,25 +24,27 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
         (root)->parent = (root);                \
         (root)->left = (root);                  \
         (root)->right = (root);                 \
+        (root)->weight = -1;                    \
     } while (0)
 
 #define binary_tree_init_node(node)                 \
     do {                                            \
-        (node)->parent = BINARY_TREE_EMPTY_BRANCH;  \
+        (node)->parent = (node);                    \
         (node)->left = BINARY_TREE_EMPTY_BRANCH;    \
         (node)->right = BINARY_TREE_EMPTY_BRANCH;   \
         (node)->weight = 0;                         \
     } while (0)
 
 #define binary_tree_root_node(node) ((node)->left == (node)->right && (node)->left != BINARY_TREE_EMPTY_BRANCH)
-#define binary_tree_leaf_node(node) ((root)->left == BINARY_TREE_EMPTY_BRANCH && (root)->right == BINARY_TREE_EMPTY_BRANCH)
+#define binary_tree_top(node) ((node) == (node)->parent)
+#define binary_tree_leaf_node(node) ((node)->left == BINARY_TREE_EMPTY_BRANCH && (node)->right == BINARY_TREE_EMPTY_BRANCH)
 #define binary_tree_empty_root(root) ((root)->left == (root) && (root)->right == (root))
 #define binary_tree_node(root) (binary_tree_root_node(root)?(root)->left:(root))
 
 #define binary_tree_add(root, node, cmp)                            \
     do {                                                            \
         if (binary_tree_empty_root(root)) {                         \
-            (root)->parent = (root)->left = (root)->right = (node); \
+            (root)->left = (root)->right = (node);                  \
             (node)->parent = (root);                                \
         } else {                                                    \
             __binary_tree_add(root->left, node, cmp);               \
@@ -51,26 +53,17 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
 
 #define binary_tree_detach(node)                                \
     do {                                                        \
-        if (!(binary_tree_empty_root(node) ||                   \
-              (node)->parent == BINARY_TREE_EMPTY_BRANCH)) {    \
-            struct binary_tree *p = (node)->parent;             \
-            if (binary_tree_root_node(p)) {                     \
-                p->left = p->right = p;                         \
-            } else {                                            \
-                if (p->left == (node))                          \
-                    p->left = BINARY_TREE_EMPTY_BRANCH;         \
-                else                                            \
-                    p->right = BINARY_TREE_EMPTY_BRANCH;        \
-                while (!binary_tree_root_node(p)) {             \
-                    p->weight -= (node)->weight + 1;            \
-                    p = p->parent;                              \
-                }                                               \
-            }                                                   \
-            (node)->parent = BINARY_TREE_EMPTY_BRANCH;          \
+        if (!binary_tree_empty_root(node)) {                    \
+            __binary_tree_detach(node);                         \
         }                                                       \
     } while (0)
 
-/* TODO: binary_tree_remove */
+#define binary_tree_remove(node)                                \
+    do {                                                        \
+        if (!binary_tree_empty_root(node)) {                    \
+            __binary_tree_remove(node);                         \
+        }                                                       \
+    } while (0)
 
 struct binary_tree_search_result {
     struct sllist list;
@@ -133,5 +126,9 @@ void __binary_tree_search(struct binary_tree *root,
 void __binary_tree_add(struct binary_tree *root,
                        struct binary_tree *node,
                        binary_tree_cmp_cbk_t cmp);
+
+void __binary_tree_detach(struct binary_tree *node);
+
+void __binary_tree_remove(struct binary_tree *node);
 
 #endif

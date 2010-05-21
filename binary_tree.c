@@ -120,6 +120,65 @@ binary_tree_search_results_free(struct sllist *results)
     }
 }
 
+void
+__binary_tree_detach(struct binary_tree *node)
+{
+    struct binary_tree *p = node->parent;
+
+    if (binary_tree_root_node(p)) {
+        p->left = p->right = p;
+    } else {
+        if (p->left == node)
+            p->left = BINARY_TREE_EMPTY_BRANCH;
+        else
+            p->right = BINARY_TREE_EMPTY_BRANCH;
+        while (!binary_tree_top(p)) {
+            p->weight -= node->weight + 1;
+            p = p->parent;
+        }
+    }
+
+    node->parent = node;
+}
+
+void
+__binary_tree_remove(struct binary_tree *node)
+{
+    struct binary_tree *p = node->parent;
+
+    if (binary_tree_root_node(p)) {
+        p->left = p->right = p;
+    } else {
+        struct binary_tree **pp = (p->left == node)?&p->left:&p->right;
+
+        if (binary_tree_leaf_node(node)) {
+            *pp = BINARY_TREE_EMPTY_BRANCH;
+        } else if (node->left != BINARY_TREE_EMPTY_BRANCH &&
+                   node->right == BINARY_TREE_EMPTY_BRANCH) {
+            *pp = node->left;
+        } else if (node->left == BINARY_TREE_EMPTY_BRANCH &&
+                   node->right != BINARY_TREE_EMPTY_BRANCH) {
+            *pp = node->right;
+        } else {
+            struct binary_tree **n = &node->right->left;
+
+            while (*n != BINARY_TREE_EMPTY_BRANCH) {
+                n = &(*n)->left;
+            }
+            *n = node->left;
+            *pp = node->right;
+        }
+        while (!binary_tree_top(p)) {
+            --p->weight;
+            p = p->parent;
+        }
+    }
+
+    node->parent = node;
+    node->left = BINARY_TREE_EMPTY_BRANCH;
+    node->right = BINARY_TREE_EMPTY_BRANCH;
+}
+
 #ifdef BINARY_TREE_MAIN
 
 #include <sys/time.h>
@@ -214,7 +273,7 @@ contruct_binary_tree(int *array,
 void
 destroy_binary_tree(struct binary_tree *root)
 {
-    struct binary_tree *r;
+    struct binary_tree *r, *left, *right;
     struct binary_tree_node *n;
 
     if (root == BINARY_TREE_EMPTY_BRANCH) /* sanity checks */
@@ -226,14 +285,13 @@ destroy_binary_tree(struct binary_tree *root)
     r = binary_tree_node(root);
     n = container_of(r, struct binary_tree_node, tree);
 
-    if (r->left != BINARY_TREE_EMPTY_BRANCH)
-        destroy_binary_tree(r->left);
-    if (r->right != BINARY_TREE_EMPTY_BRANCH)
-        destroy_binary_tree(r->right);
+    left = r->left, right = r->right;
 
-    binary_tree_detach(r);
-
+    binary_tree_remove(r);
     free(n);
+
+    destroy_binary_tree(left);
+    destroy_binary_tree(right);
 }
 
 cmp_result_t
@@ -343,12 +401,11 @@ int main(int argc, char **argv)
 
     if (!sllist_empty(&values)) {
         struct sllist *e;
-        printf("Entries for key '%d'\n", key);
+        int count;
         sllist_for_each(&values, e) {
-            struct binary_tree_search_result *node = container_of(e, struct binary_tree_search_result, list);
-            struct binary_tree_node *_node = container_of(node->node, struct binary_tree_node, tree);
-            printf("    %d\n", _node->num);
+            ++count;
         }
+        printf("Entries %d for key '%d'\n", count, key);
         binary_tree_search_results_free(&values);
     } else {
         printf("Value was not found for key '%d'\n", key);
