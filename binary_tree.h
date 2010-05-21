@@ -47,7 +47,7 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
             (root)->left = (root)->right = (node);                  \
             (node)->parent = (root);                                \
         } else {                                                    \
-            __binary_tree_add(root->left, node, cmp);               \
+            __binary_tree_add((root)->left, node, cmp);             \
         }                                                           \
     } while (0)
 
@@ -76,7 +76,7 @@ struct binary_tree_search_result {
 #define binary_tree_search(root, key, match, results, limit)        \
     do {                                                            \
         if (!binary_tree_empty_root(root)) {                        \
-            __binary_tree_search(root, key, match, results, limit); \
+            __binary_tree_search(binary_tree_node(root), key, match, results, limit); \
         }                                                           \
     } while (0)
 
@@ -93,13 +93,13 @@ typedef enum {
         if (!binary_tree_empty_root(root)) {                            \
             switch (type) {                                             \
                 case binary_tree_traverse_type_infix:                   \
-                    __binary_tree_traverse_infix(root->left, cbk, user_data); \
+                    __binary_tree_traverse_infix(binary_tree_node(root), cbk, user_data); \
                     break;                                              \
                 case binary_tree_traverse_type_prefix:                  \
-                    __binary_tree_traverse_prefix(root->left, cbk, user_data); \
+                    __binary_tree_traverse_prefix(binary_tree_node(root), cbk, user_data); \
                     break;                                              \
                 case binary_tree_traverse_type_postfix:                 \
-                    __binary_tree_traverse_postfix(root->left, cbk, user_data); \
+                    __binary_tree_traverse_postfix(binary_tree_node(root), cbk, user_data); \
                     break;                                              \
             }                                                           \
         }                                                               \

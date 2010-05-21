@@ -271,6 +271,7 @@ contruct_binary_tree(int *array,
     }
 }
 
+/* FIXME: use traverse? */
 void
 destroy_binary_tree(struct binary_tree *root)
 {
@@ -402,7 +403,7 @@ int main(int argc, char **argv)
 
     if (!sllist_empty(&values)) {
         struct sllist *e;
-        int count;
+        int count = 0;
         sllist_for_each(&values, e) {
             ++count;
         }
