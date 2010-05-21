@@ -12,10 +12,11 @@ __binary_tree_add(struct binary_tree *root,
 {
     cmp_result_t res;
     struct binary_tree **n, *r = root;
+    int weight = node->weight + 1;
 
     do {
         res = cmp(r, node);
-        ++r->weight;
+        r->weight += weight;
 
         n = BINARY_TREE_DIRECTION_LEFT(res)?&r->left:&r->right;
 
