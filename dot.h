@@ -28,6 +28,12 @@ void dot_dump_link_table_to_sllist_head(FILE *out,
                                         const char *dst_label,
                                         int dst_id);
 
+void dot_dump_link_table_to_node(FILE *out,
+                                 const char *src_label,
+                                 int src_id,
+                                 const char *dst_label,
+                                 int dst_id);
+
 void dot_dump_link_node_to_node(FILE *out,
                                 const char *src_label,
                                 int src_id,

@@ -76,6 +76,16 @@ dot_dump_link_table_to_sllist_head(FILE *out,
 }
 
 void
+dot_dump_link_table_to_node(FILE *out,
+                            const char *src_label,
+                            int src_id,
+                            const char *dst_label,
+                            int dst_id)
+{
+    fprintf(out, "    \"%s\":%s_%d -> %s_%d;\n", src_label, src_label, src_id, dst_label, dst_id);
+}
+
+void
 dot_dump_link_node_to_node(FILE *out,
                            const char *src_label,
                            int src_id,
