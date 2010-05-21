@@ -1,6 +1,6 @@
 CC		:= gcc
 CFLAGS	:= -O3
-ALGOS	:= qsort htable-list binary-tree
+ALGOS	:= qsort htable-list htable-tree binary-tree
 LDFLAGS := -lpthread
 
 RND_U32_CNT := 1000000
@@ -29,6 +29,9 @@ qsort: qsort.c $(HELPERS)
 htable-list: htable.c $(HELPERS)
 	$(Q)$(CC) $^ -DHTABLE_LIST $(CFLAGS) -o $@ $(LDFLAGS)
 
+htable-tree: htable.c binary_tree.c $(HELPERS)
+	$(Q)$(CC) $^ -DHTABLE_TREE $(CFLAGS) -o $@ $(LDFLAGS)
+
 binary-tree: binary_tree.c $(HELPERS)
 	$(Q)$(CC) $^ -DBINARY_TREE_MAIN $(CFLAGS) -o $@ $(LDFLAGS)
 
@@ -47,6 +50,11 @@ test-htable-list: htable-list
 	$(Q)dd if=/dev/urandom of=32b.100.rnd bs=100 count=32 &>/dev/null
 	$(Q)./htable-list -f simple -s 10 -i 32b.100.rnd -g htable-list.100.dot
 	$(Q)dot -Tpng -o htable-list.100.png htable-list.100.dot
+
+test-htable-tree: htable-tree
+	$(Q)dd if=/dev/urandom of=32b.100.rnd bs=100 count=32 &>/dev/null
+	$(Q)./htable-tree -f simple -s 10 -i 32b.100.rnd -g htable-tree.100.dot
+	$(Q)dot -Tpng -o htable-tree.100.png htable-tree.100.dot
 
 test-binary-tree: binary-tree
 	$(Q)dd if=/dev/urandom of=u32.100.rnd bs=100 count=4 &>/dev/null
