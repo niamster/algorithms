@@ -9,6 +9,9 @@ struct binary_tree {
     struct binary_tree *left;
     struct binary_tree *right;
     unsigned int weight;
+#ifdef BINARY_TREE_AVL
+    int balance;
+#endif
 };
 
 typedef cmp_result_t (*binary_tree_cmp_cbk_t)(struct binary_tree *, struct binary_tree *);
@@ -19,6 +22,16 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
 #define BINARY_TREE_DIRECTION_RIGHT(res) ((res) == cmp_result_greater || (res) == cmp_result_equal)
 #define BINARY_TREE_EMPTY_BRANCH ((struct binary_tree *)NULL)
 
+#ifdef BINARY_TREE_AVL
+#define binary_tree_init_root(root)             \
+    do {                                        \
+        (root)->parent = (root);                \
+        (root)->left = (root);                  \
+        (root)->right = (root);                 \
+        (root)->weight = -1;                    \
+        (root)->balance = -1;                   \
+    } while (0)
+#else
 #define binary_tree_init_root(root)             \
     do {                                        \
         (root)->parent = (root);                \
@@ -26,7 +39,18 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
         (root)->right = (root);                 \
         (root)->weight = -1;                    \
     } while (0)
+#endif
 
+#ifdef BINARY_TREE_AVL
+#define binary_tree_init_node(node)                 \
+    do {                                            \
+        (node)->parent = (node);                    \
+        (node)->left = BINARY_TREE_EMPTY_BRANCH;    \
+        (node)->right = BINARY_TREE_EMPTY_BRANCH;   \
+        (node)->weight = 0;                         \
+        (node)->balance = 0;                        \
+    } while (0)
+#else
 #define binary_tree_init_node(node)                 \
     do {                                            \
         (node)->parent = (node);                    \
@@ -34,6 +58,7 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
         (node)->right = BINARY_TREE_EMPTY_BRANCH;   \
         (node)->weight = 0;                         \
     } while (0)
+#endif
 
 #define binary_tree_root_node(node) ((node)->left == (node)->right && (node)->left != BINARY_TREE_EMPTY_BRANCH)
 #define binary_tree_top(node) ((node) == (node)->parent)
