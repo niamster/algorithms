@@ -5,6 +5,237 @@
 
 #include "binary_tree.h"
 
+#ifdef BINARY_TREE_AVL
+struct binary_tree *
+binary_tree_avl_big_right_turn(struct binary_tree *node,
+                               struct binary_tree *pivot,
+                               struct binary_tree *bottom)
+{
+    if (binary_tree_root_node(node->parent))
+        node->parent->left = node->parent->right = bottom;
+    else if (node->parent->left == node)
+        node->parent->left = bottom;
+    else
+        node->parent->right = bottom;
+    bottom->parent = node->parent;
+
+    if (bottom->balance == 0) {
+        node->balance = pivot->balance = 0;
+    } else if (bottom->balance == 1) {
+        node->balance = 0;
+        pivot->balance = -1;
+    } else {
+        node->balance = 1;
+        pivot->balance = 0;
+    }
+
+    bottom->balance = 0;
+
+    node->weight -= pivot->weight + 1;
+    if (bottom->left != BINARY_TREE_EMPTY_BRANCH)
+        node->weight += bottom->left->weight + 1;
+    pivot->weight -= bottom->weight + 1;
+    if (bottom->right != BINARY_TREE_EMPTY_BRANCH)
+        pivot->weight += bottom->right->weight + 1;
+    bottom->weight = node->weight + pivot->weight + 2;
+
+    node->right = bottom->left;
+    if (node->right != BINARY_TREE_EMPTY_BRANCH)
+        node->right->parent = node;
+    pivot->left = bottom->right;
+    if (pivot->left != BINARY_TREE_EMPTY_BRANCH)
+        pivot->left->parent = pivot;
+    bottom->left = node;
+    bottom->right = pivot;
+    node->parent = bottom;
+    pivot->parent = bottom;
+
+    return bottom;
+}
+
+struct binary_tree *
+binary_tree_avl_small_right_turn(struct binary_tree *node,
+                                 struct binary_tree *pivot)
+{
+    if (binary_tree_root_node(node->parent))
+        node->parent->left = node->parent->right = pivot;
+    else if (node->parent->left == node)
+        node->parent->left = pivot;
+    else
+        node->parent->right = pivot;
+    pivot->parent = node->parent;
+
+    if (pivot->balance == 0) {
+        node->balance = -1;
+        pivot->balance = 1;
+    } else {
+        node->balance = pivot->balance = 0;
+    }
+
+    node->weight -= pivot->weight + 1;
+    if (pivot->left!=BINARY_TREE_EMPTY_BRANCH) {
+        node->weight += pivot->left->weight + 1;
+        pivot->weight -= pivot->left->weight + 1;
+    }
+    pivot->weight += node->weight + 1;
+
+    node->right = pivot->left;
+    if (node->right != BINARY_TREE_EMPTY_BRANCH)
+        node->right->parent = node;
+    pivot->left = node;
+    node->parent = pivot;
+
+    return pivot;
+}
+
+struct binary_tree *
+binary_tree_avl_big_left_turn(struct binary_tree *node,
+                              struct binary_tree *pivot,
+                              struct binary_tree *bottom)
+{
+    if (binary_tree_root_node(node->parent))
+        node->parent->left = node->parent->right = bottom;
+    else if (node->parent->left == node)
+        node->parent->left = bottom;
+    else
+        node->parent->right = bottom;
+    bottom->parent = node->parent;
+
+    if (bottom->balance == 0) {
+        node->balance = pivot->balance = 0;
+    } else if (bottom->balance == 1) {
+        node->balance = -1;
+        pivot->balance = 0;
+    } else {
+        node->balance = 0;
+        pivot->balance = 1;
+    }
+
+    bottom->balance = 0;
+
+    node->weight -= pivot->weight + 1;
+    if (bottom->right != BINARY_TREE_EMPTY_BRANCH)
+        node->weight += bottom->right->weight + 1;
+    pivot->weight -= bottom->weight + 1;
+    if (bottom->left != BINARY_TREE_EMPTY_BRANCH)
+        pivot->weight += bottom->left->weight + 1;
+    bottom->weight = node->weight + pivot->weight + 2;
+
+    node->left = bottom->right;
+    if (node->left != BINARY_TREE_EMPTY_BRANCH)
+        node->left->parent = node;
+    pivot->right = bottom->left;
+    if (pivot->right != BINARY_TREE_EMPTY_BRANCH)
+        pivot->right->parent = pivot;
+    bottom->left = pivot;
+    bottom->right = node;
+    node->parent = bottom;
+    pivot->parent = bottom;
+
+    return bottom;
+}
+
+struct binary_tree *
+binary_tree_avl_small_left_turn(struct binary_tree *node,
+                                struct binary_tree *pivot)
+{
+    if (binary_tree_root_node(node->parent))
+        node->parent->left = node->parent->right = pivot;
+    else if (node->parent->left == node)
+        node->parent->left = pivot;
+    else
+        node->parent->right = pivot;
+    pivot->parent = node->parent;
+
+    if (pivot->balance == 0) {
+        node->balance = 1;
+        pivot->balance = -1;
+    } else {
+        node->balance = pivot->balance = 0;
+    }
+    pivot->parent = node->parent;
+
+    node->weight -= pivot->weight + 1;
+    if (pivot->right != BINARY_TREE_EMPTY_BRANCH) {
+        node->weight += pivot->right->weight + 1;
+        pivot->weight -= pivot->right->weight + 1;
+    }
+    pivot->weight += node->weight + 1;
+
+    node->left = pivot->right;
+    if (node->left != BINARY_TREE_EMPTY_BRANCH)
+        node->left->parent = node;
+    pivot->right = node;
+    node->parent = pivot;
+
+    return pivot;
+}
+
+void
+binary_tree_avl_rebalance_on_insert(struct binary_tree *node)
+{
+    struct binary_tree *p = node->parent, *n = node;
+
+    while (!binary_tree_top(p)) {
+        if (p->left == n)
+            ++p->balance;
+        else
+            --p->balance;
+
+        if (p->balance == 0) {
+            break;
+        } else if (p->balance == -2) {
+            if (p->right->balance == 1) {
+                p = binary_tree_avl_big_right_turn(p, p->right, p->right->left);
+            } else {
+                p = binary_tree_avl_small_right_turn(p, p->right);
+            }
+        } else if (p->balance == 2) {
+            if (p->left->balance == -1) {
+                p = binary_tree_avl_big_left_turn(p, p->left, p->left->right);
+            } else {
+                p = binary_tree_avl_small_left_turn(p, p->left);
+            }
+        }
+
+        n = p;
+        p = p->parent;
+    }
+}
+
+void
+binary_tree_avl_rebalance_on_delete(struct binary_tree *node)
+{
+    struct binary_tree *p = node->parent, *n = node;
+
+    while (!binary_tree_top(p)) {
+        if (p->left == n)
+            --p->balance;
+        else
+            ++p->balance;
+
+        if (p->balance == -1 || p->balance == 1) {
+            break;
+        } else if (p->balance == -2) {
+            if (p->right->balance == 1) {
+                p = binary_tree_avl_big_right_turn(p, p->right, p->right->left);
+            } else {
+                p = binary_tree_avl_small_right_turn(p, p->right);
+            }
+        } else if (p->balance == 2) {
+            if (p->left->balance == -1) {
+                p = binary_tree_avl_big_left_turn(p, p->left, p->left->right);
+            } else {
+                p = binary_tree_avl_small_left_turn(p, p->left);
+            }
+        }
+
+        n = p;
+        p = p->parent;
+    }
+}
+#endif
+
 void
 __binary_tree_add(struct binary_tree *root,
                   struct binary_tree *node,
@@ -23,6 +254,10 @@ __binary_tree_add(struct binary_tree *root,
         if (*n == BINARY_TREE_EMPTY_BRANCH) {
             *n = node;
             (*n)->parent = r;
+
+#ifdef BINARY_TREE_AVL
+            binary_tree_avl_rebalance_on_insert(*n);
+#endif
 
             break;
         }
@@ -137,6 +372,10 @@ __binary_tree_detach(struct binary_tree *node)
             p->weight -= node->weight + 1;
             p = p->parent;
         }
+
+#ifdef BINARY_TREE_AVL
+        binary_tree_avl_rebalance_on_delete(node->parent);
+#endif
     }
 
     node->parent = node;
@@ -173,6 +412,10 @@ __binary_tree_remove(struct binary_tree *node)
             --p->weight;
             p = p->parent;
         }
+
+#ifdef BINARY_TREE_AVL
+        binary_tree_avl_rebalance_on_delete(node->parent);
+#endif
     }
 
     node->parent = node;
