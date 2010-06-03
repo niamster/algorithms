@@ -3,11 +3,11 @@ CFLAGS	:= -O3
 ALGOS	:= qsort htable-list htable-tree binary-tree binary-tree-avl
 LDFLAGS := -lpthread
 
-RND_U32_CNT := 1000000
-RND_U32_OUT := u32.$(RND_U32_CNT).rnd
+RND_CNT := 1000000
+TST_RND_CNT := 1000
 
-RND_32B_CNT  := 1000000
-RND_32B_OUT  := 32b.$(RND_32B_CNT).rnd
+RND_U32_OUT := u32.$(RND_CNT).rnd
+RND_32B_OUT  := 32b.$(RND_CNT).rnd
 
 ifeq ($(DEBUG), 1)
 CFLAGS := -O0 -g -DDEBUG=1
@@ -32,6 +32,9 @@ htable-list: htable.c $(HELPERS)
 htable-tree: htable.c binary_tree.c $(HELPERS)
 	$(Q)$(CC) $^ -DHTABLE_TREE $(CFLAGS) -o $@ $(LDFLAGS)
 
+htable-tree-avl: htable.c binary_tree.c $(HELPERS)
+	$(Q)$(CC) $^ -DHTABLE_TREE -DBINARY_TREE_AVL $(CFLAGS) -o $@ $(LDFLAGS)
+
 binary-tree: binary_tree.c $(HELPERS)
 	$(Q)$(CC) $^ -DBINARY_TREE_MAIN $(CFLAGS) -o $@ $(LDFLAGS)
 
@@ -40,28 +43,30 @@ binary-tree-avl: binary_tree.c $(HELPERS)
 
 .PHONY: rnd.u32 rnd.32b
 rnd-u32:
-	$(Q)dd if=/dev/urandom of=$(RND_U32_OUT) bs=$(RND_U32_CNT) count=4 &>/dev/null
+	$(Q)dd if=/dev/urandom of=$(RND_U32_OUT) bs=$(RND_CNT) count=4 status=noxfer
 rnd-32b:
-	$(Q)dd if=/dev/urandom of=$(RND_32B_OUT) bs=$(RND_32B_CNT) count=32 &>/dev/null
+	$(Q)dd if=/dev/urandom of=$(RND_32B_OUT) bs=$(RND_CNT) count=32 status=noxfer
 
 test-qsort: qsort
-	$(Q)dd if=/dev/urandom of=u32.100.rnd bs=100 count=4 &>/dev/null
-	$(Q)./qsort -s QS1 -i 32b.100.rnd --dump
-	$(Q)./qsort -s QS2 -i 32b.100.rnd --dump
+	$(Q)dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer
+	$(Q)./qsort -s QS1 -i $@.$(TST_RND_CNT).rnd --dump
+	$(Q)./qsort -s QS2 -i $@.$(TST_RND_CNT).rnd --dump
 
-test-htable: htable-list htable-tree
-	$(Q)dd if=/dev/urandom of=32b.100.rnd bs=100 count=32 &>/dev/null
-	$(Q)./htable-list -f simple -s 10 -i 32b.100.rnd -g htable-list.100.dot
-	$(Q)dot -Tpng -o htable-list.100.png htable-list.100.dot
-	$(Q)./htable-tree -f simple -s 10 -i 32b.100.rnd -g htable-tree.100.dot
-	$(Q)dot -Tpng -o htable-tree.100.png htable-tree.100.dot
+test-htable: htable-list htable-tree htable-tree-avl
+	$(Q)dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=32 status=noxfer
+	$(Q)./htable-list -f simple -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-list.$(TST_RND_CNT).dot
+	$(Q)dot -Tpng -o $@-list.$(TST_RND_CNT).png $@-list.$(TST_RND_CNT).dot
+	$(Q)./htable-tree -f simple -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-tree.$(TST_RND_CNT).dot
+	$(Q)dot -Tpng -o $@-tree.$(TST_RND_CNT).png $@-tree.$(TST_RND_CNT).dot
+	$(Q)./htable-tree-avl -f simple -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-tree-avl.$(TST_RND_CNT).dot
+	$(Q)dot -Tpng -o $@-tree-avl.$(TST_RND_CNT).png $@-tree-avl.$(TST_RND_CNT).dot
 
 test-binary-tree: binary-tree binary-tree-avl
-	$(Q)dd if=/dev/urandom of=u32.100.rnd bs=100 count=4 &>/dev/null
-	$(Q)./binary-tree -i u32.100.rnd -g binary-tree.100.dot
-	$(Q)dot -Tpng -o binary-tree.100.png binary-tree.100.dot
-	$(Q)./binary-tree-avl -i u32.100.rnd -g binary-tree-avl.100.dot
-	$(Q)dot -Tpng -o binary-tree-avl.100.png binary-tree-avl.100.dot
+	$(Q)dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer
+	$(Q)./binary-tree -i $@.$(TST_RND_CNT).rnd -g $@.$(TST_RND_CNT).dot
+	$(Q)dot -Tpng -o $@.$(TST_RND_CNT).png $@.$(TST_RND_CNT).dot
+	$(Q)./binary-tree-avl -i $@.$(TST_RND_CNT).rnd -g $@-avl.$(TST_RND_CNT).dot
+	$(Q)dot -Tpng -o $@-avl.$(TST_RND_CNT).png $@-avl.$(TST_RND_CNT).dot
 
 clean:
 	$(Q)rm -rf $(ALGOS)
