@@ -4,7 +4,7 @@ ALGOS	:= qsort htable-list htable-tree binary-tree binary-tree-avl
 LDFLAGS := -lpthread
 
 RND_CNT := 1000000
-TST_RND_CNT := 1000
+TST_RND_CNT := 100
 
 RND_U32_OUT := u32.$(RND_CNT).rnd
 RND_32B_OUT  := 32b.$(RND_CNT).rnd
@@ -54,12 +54,20 @@ test-qsort: qsort
 
 test-htable: htable-list htable-tree htable-tree-avl
 	$(Q)dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=32 status=noxfer
-	$(Q)./htable-list -f additive -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-list.$(TST_RND_CNT).dot
-	$(Q)dot -Tpng -o $@-list.$(TST_RND_CNT).png $@-list.$(TST_RND_CNT).dot
-	$(Q)./htable-tree -f additive -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-tree.$(TST_RND_CNT).dot
-	$(Q)dot -Tpng -o $@-tree.$(TST_RND_CNT).png $@-tree.$(TST_RND_CNT).dot
-	$(Q)./htable-tree-avl -f additive -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-tree-avl.$(TST_RND_CNT).dot
-	$(Q)dot -Tpng -o $@-tree-avl.$(TST_RND_CNT).png $@-tree-avl.$(TST_RND_CNT).dot
+
+	$(Q)./htable-list -f additive -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-list-additive.$(TST_RND_CNT).dot
+	$(Q)dot -Tpng -o $@-list-additive.$(TST_RND_CNT).png $@-list-additive.$(TST_RND_CNT).dot
+	$(Q)./htable-tree -f additive -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-tree-additive.$(TST_RND_CNT).dot
+	$(Q)dot -Tpng -o $@-tree-additive.$(TST_RND_CNT).png $@-tree-additive.$(TST_RND_CNT).dot
+	$(Q)./htable-tree-avl -f additive -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-tree-avl-additive.$(TST_RND_CNT).dot
+	$(Q)dot -Tpng -o $@-tree-avl-additive.$(TST_RND_CNT).png $@-tree-avl-additive.$(TST_RND_CNT).dot
+
+	$(Q)./htable-list -f rotating -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-list-rotating.$(TST_RND_CNT).dot
+	$(Q)dot -Tpng -o $@-list-rotating.$(TST_RND_CNT).png $@-list-rotating.$(TST_RND_CNT).dot
+	$(Q)./htable-tree -f rotating -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-tree-rotating.$(TST_RND_CNT).dot
+	$(Q)dot -Tpng -o $@-tree-rotating.$(TST_RND_CNT).png $@-tree-rotating.$(TST_RND_CNT).dot
+	$(Q)./htable-tree-avl -f rotating -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-tree-avl-rotating.$(TST_RND_CNT).dot
+	$(Q)dot -Tpng -o $@-tree-avl-rotating.$(TST_RND_CNT).png $@-tree-avl-rotating.$(TST_RND_CNT).dot
 
 test-binary-tree: binary-tree binary-tree-avl
 	$(Q)dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer
