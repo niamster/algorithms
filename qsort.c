@@ -253,14 +253,6 @@ enum sort_variant {
     sort_variant_qs2
 };
 
-/*
-  dd if=/dev/urandom of=/tmp/rnd count=1000000 bs=4
-  ./qsort --sort-variant QS1 --input-data /tmp/rnd --output-data /tmp/QS1
-  ./qsort --sort-variant QS1 --input-data /tmp/rnd --output-data /tmp/QS1P --threads 8
-  ./qsort --sort-variant QS2 --input-data /tmp/rnd --output-data /tmp/QS2
-  ./qsort --sort-variant QS2 --input-data /tmp/rnd --output-data /tmp/QS2P --threads 8
-*/
-
 int
 usage(const char *prog)
 {
