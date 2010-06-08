@@ -558,11 +558,6 @@ search_binary_tree(struct binary_tree *root,
     binary_tree_search(root, (void *)&key, binary_tree_integer_match, result, limit);
 }
 
-/*
-  dd if=/dev/urandom of=/tmp/rnd count=1000000 bs=4
-  ./binary-tree --input-data /tmp/rnd
-*/
-
 int
 usage(const char *prog)
 {

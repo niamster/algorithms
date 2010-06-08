@@ -388,11 +388,6 @@ additive_hash(const char *key,
 	return hash % prime;
 }
 
-/*
-  dd if=/dev/urandom of=/tmp/rnd count=1000000 bs=32
-  ./htable-list --hash-function simple --input-data /tmp/rnd
-*/
-
 int
 usage(const char *prog)
 {
