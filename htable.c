@@ -16,7 +16,7 @@
 #error Unknown storage type for handling hash table data
 #endif
 
-typedef int (*hash_function_t)(const char *, int limit);
+typedef unsigned int (*hash_function_t)(const char *, unsigned int len, unsigned int prime);
 
 struct hash_node {
     struct key_value *data;
@@ -229,7 +229,7 @@ construct_htable(struct key_value *data,
 
     for (i=0;i<count;++i) {
         struct hash_node *node = NULL;
-        int hash = hash_function(data[i].key, hash_size-1);
+        int hash = hash_function(data[i].key, data[i].key?strlen(data[i].key):0, hash_size);
         if (hash >= hash_size) { /* sanity checks */
             fprintf(stderr, "Invalid hash: %d for %s, skipping element\n", hash, data[i].key);
             continue;
@@ -335,7 +335,7 @@ search_htable(
     struct sllist *e;
 #endif
 
-    int hash = hash_function(key, hash_size-1);
+    int hash = hash_function(key, key?strlen(key):0, hash_size);
     if (hash >= hash_size) { /* sanity checks */
         fprintf(stderr, "Invalid hash: %d for %s\n", hash, key);
         return;
@@ -371,20 +371,21 @@ search_htable(
 #endif
 }
 
-int
-simple_hash(const char *data,
-            int limit)
+unsigned int
+additive_hash(const char *key,
+              unsigned int len,
+              unsigned int prime)
 {
-    unsigned int hash = 0;
+    unsigned int hash = len;
 	int c;
 
-    if (!data || limit == 0)
+    if (!key)
         return 0;
 
-	while (c = *data++)
+	while (c = *key++)
 	    hash += c;
 
-	return hash % (limit + 1);
+	return hash % prime;
 }
 
 /*
@@ -440,8 +441,8 @@ int main(int argc, char **argv)
     while ((opt = getopt_long(argc, argv, "f:s:k:l:i:c:g:", options, NULL)) != -1) {
         switch (opt) {
             case 'f':
-                if (!strncmp(optarg, "simple", 6))
-                    hash_function = simple_hash;
+                if (!strncmp(optarg, "additive", 6))
+                    hash_function = additive_hash;
                 else
                     return usage(argv[0]);
                 break;
