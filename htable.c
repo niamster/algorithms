@@ -388,6 +388,24 @@ additive_hash(const char *key,
 	return hash % prime;
 }
 
+unsigned int
+rotating_hash(const char *key,
+              unsigned int len,
+              unsigned int prime)
+{
+  unsigned int hash = len;
+  int c;
+
+  if (!key)
+      return 0;
+
+  while (c = *key++)
+    hash = (hash<<4)^(hash>>28)^c;
+
+  return hash % prime;
+}
+
+
 int
 usage(const char *prog)
 {
@@ -436,8 +454,10 @@ int main(int argc, char **argv)
     while ((opt = getopt_long(argc, argv, "f:s:k:l:i:c:g:", options, NULL)) != -1) {
         switch (opt) {
             case 'f':
-                if (!strncmp(optarg, "additive", 6))
+                if (!strncmp(optarg, "additive", 8))
                     hash_function = additive_hash;
+                else if (!strncmp(optarg, "rotating", 8))
+                    hash_function = rotating_hash;
                 else
                     return usage(argv[0]);
                 break;
