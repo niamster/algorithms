@@ -203,9 +203,11 @@ construct_htable(struct key_value *data,
                  struct binary_tree **hash_table,
 #endif
                  int hash_size,
-                 hash_function_t hash_function)
+                 hash_function_t hash_function,
+                 struct hash_node **pool)
 {
     int i;
+    struct hash_node *nodes;
 
 #if defined(HTABLE_LIST)
     if (!(*hash_table = malloc(hash_size*sizeof(struct sllist)))) {
@@ -227,25 +229,26 @@ construct_htable(struct key_value *data,
 #endif
     }
 
+    if (!(*pool = malloc(count*sizeof(struct hash_node)))) {
+        fprintf(stderr, "Error error allocating %d bytes: %s", count*sizeof(struct hash_node), strerror(errno));
+        return -1;
+    }
+
+    nodes = *pool;
+
     for (i=0;i<count;++i) {
-        struct hash_node *node = NULL;
         int hash = hash_function(data[i].key, data[i].key?strlen(data[i].key):0, hash_size);
         if (hash >= hash_size) { /* sanity checks */
             fprintf(stderr, "Invalid hash: %d for %s, skipping element\n", hash, data[i].key);
             continue;
         }
 
-        if (!(node = malloc(sizeof(struct hash_node)))) {
-            fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct hash_node), strerror(errno));
-            return -1;
-        }
-
-        node->data = &data[i];
+        nodes[i].data = &data[i];
 #if defined(HTABLE_LIST)
-        sllist_add(&(*hash_table)[hash], &node->list);
+        sllist_add(&(*hash_table)[hash], &nodes[i].list);
 #elif defined(HTABLE_TREE)
-        binary_tree_init_node(&node->tree);
-        binary_tree_add(&(*hash_table)[hash], &node->tree, binary_tree_str_key_cmp);
+        binary_tree_init_node(&nodes[i].tree);
+        binary_tree_add(&(*hash_table)[hash], &nodes[i].tree, binary_tree_str_key_cmp);
 #endif
     }
 }
@@ -258,7 +261,6 @@ destroy_htable_entries(struct sllist *head)
     sllist_for_each_safe_prev(head, e, p, t) {
         struct hash_node *node = container_of(e, struct hash_node, list);
         sllist_detach(e, p);
-        free(node);
     }
 }
 #elif defined(HTABLE_TREE)
@@ -281,7 +283,6 @@ destroy_htable_entries(struct binary_tree *root)
     left = r->left, right = r->right;
 
     binary_tree_remove(r);
-    free(n);
 
     destroy_htable_entries(left);
     destroy_htable_entries(right);
@@ -295,12 +296,14 @@ destroy_htable(
 #elif defined(HTABLE_TREE)
                struct binary_tree *hash_table,
 #endif
-               int hash_size)
+               int hash_size,
+               struct hash_node *pool)
 {
     int i;
     for (i=0;i<hash_size;++i)
         destroy_htable_entries(&hash_table[i]);
 
+    free(pool);
     free(hash_table);
 }
 
@@ -427,6 +430,7 @@ int main(int argc, char **argv)
 #elif defined(HTABLE_TREE)
     struct binary_tree *hash_table = NULL;
 #endif
+    struct hash_node *pool;
     int count = 0;
 
     const char *input_data = "/dev/random";
@@ -495,7 +499,7 @@ int main(int argc, char **argv)
         print_key_value(data, count);
 
     gettimeofday(&tb, NULL);
-    construct_htable(data, count, &hash_table, hash_size, hash_function);
+    construct_htable(data, count, &hash_table, hash_size, hash_function, &pool);
     gettimeofday(&ta, NULL);
     usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
     secs = usecs/1000000;
@@ -543,7 +547,7 @@ int main(int argc, char **argv)
     free(data);
 
     gettimeofday(&tb, NULL);
-    destroy_htable(hash_table, hash_size);
+    destroy_htable(hash_table, hash_size, pool);
     gettimeofday(&ta, NULL);
     usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
     secs = usecs/1000000;

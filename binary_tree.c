@@ -492,31 +492,35 @@ dump_binary_tree_graph(const char *graph,
 }
 
 int
-contruct_binary_tree(int *array,
-                     int count,
-                     struct binary_tree *root)
+construct_binary_tree(int *array,
+                      int count,
+                      struct binary_tree *root,
+                      struct binary_tree_node **pool)
 {
-    struct binary_tree_node *node;
+    struct binary_tree_node *nodes;
     int i;
 
     binary_tree_init_root(root);
 
+    if (!(*pool = malloc(count*sizeof(struct binary_tree_node)))) {
+        fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct binary_tree_node), strerror(errno));
+        return -1;
+    }
+
+    nodes = *pool;
+
     for (i=0;i<count;++i) {
-        if (!(node = malloc(sizeof(struct binary_tree_node)))) {
-            fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct binary_tree_node), strerror(errno));
-            return -1;
-        }
+        binary_tree_init_node(&nodes[i].tree);
 
-        binary_tree_init_node(&node->tree);
-
-        node->num = array[i];
-        binary_tree_add(root, &node->tree, binary_tree_integer_cmp);
+        nodes[i].num = array[i];
+        binary_tree_add(root, &nodes[i].tree, binary_tree_integer_cmp);
     }
 }
 
 /* FIXME: use traverse? */
 void
-destroy_binary_tree(struct binary_tree *root)
+destroy_binary_tree(struct binary_tree *root,
+                    struct binary_tree_node *pool)
 {
     struct binary_tree *r, *left, *right;
     struct binary_tree_node *n;
@@ -533,10 +537,12 @@ destroy_binary_tree(struct binary_tree *root)
     left = r->left, right = r->right;
 
     binary_tree_remove(r);
-    free(n);
 
-    destroy_binary_tree(left);
-    destroy_binary_tree(right);
+    destroy_binary_tree(left, NULL);
+    destroy_binary_tree(right, NULL);
+
+    if (pool)
+        free(pool);
 }
 
 cmp_result_t
@@ -581,6 +587,7 @@ int main(int argc, char **argv)
 
     unsigned int *array;
     struct binary_tree binary_tree_root;
+    struct binary_tree_node *pool;
 
     int opt;
     const struct option options[] = {
@@ -624,7 +631,7 @@ int main(int argc, char **argv)
         print_array(array, count);
 
     gettimeofday(&tb, NULL);
-    contruct_binary_tree(array, count, &binary_tree_root);
+    construct_binary_tree(array, count, &binary_tree_root, &pool);
     gettimeofday(&ta, NULL);
     usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
     secs = usecs/1000000;
@@ -666,7 +673,7 @@ int main(int argc, char **argv)
     free(array);
 
     gettimeofday(&tb, NULL);
-    destroy_binary_tree(&binary_tree_root);
+    destroy_binary_tree(&binary_tree_root, pool);
     gettimeofday(&ta, NULL);
     usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
     secs = usecs/1000000;
