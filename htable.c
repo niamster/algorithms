@@ -541,7 +541,16 @@ int main(int argc, char **argv)
 
   out:
     free(data);
+
+    gettimeofday(&tb, NULL);
     destroy_htable(hash_table, hash_size);
+    gettimeofday(&ta, NULL);
+    usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
+    secs = usecs/1000000;
+    usecs %= 1000000;
+    msecs = usecs/1000;
+    usecs %= 1000;
+    printf("Destruction time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
 
     return 0;
 }
