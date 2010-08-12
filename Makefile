@@ -59,23 +59,23 @@ test-htable: htable-list htable-tree htable-tree-avl
 	$(Q)dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=32 status=noxfer >/dev/null 2>&1
 
 	$(Q)echo "htable-list-additive"
-	$(Q)./htable-list -f additive -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-list-additive.$(TST_RND_CNT).dot
+	$(Q)./htable-list -f additive -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-list-additive.$(TST_RND_CNT).dot
 	$(Q)dot -Tpng -o $@-list-additive.$(TST_RND_CNT).png $@-list-additive.$(TST_RND_CNT).dot
 	$(Q)echo "htable-tree-additive"
-	$(Q)./htable-tree -f additive -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-tree-additive.$(TST_RND_CNT).dot
+	$(Q)./htable-tree -f additive -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-tree-additive.$(TST_RND_CNT).dot
 	$(Q)dot -Tpng -o $@-tree-additive.$(TST_RND_CNT).png $@-tree-additive.$(TST_RND_CNT).dot
 	$(Q)echo "htable-tree-avl-additive"
-	$(Q)./htable-tree-avl -f additive -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-tree-avl-additive.$(TST_RND_CNT).dot
+	$(Q)./htable-tree-avl -f additive -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-tree-avl-additive.$(TST_RND_CNT).dot
 	$(Q)dot -Tpng -o $@-tree-avl-additive.$(TST_RND_CNT).png $@-tree-avl-additive.$(TST_RND_CNT).dot
 
 	$(Q)echo "htable-list-rotating"
-	$(Q)./htable-list -f rotating -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-list-rotating.$(TST_RND_CNT).dot
+	$(Q)./htable-list -f rotating -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-list-rotating.$(TST_RND_CNT).dot
 	$(Q)dot -Tpng -o $@-list-rotating.$(TST_RND_CNT).png $@-list-rotating.$(TST_RND_CNT).dot
 	$(Q)echo "htable-tree-rotating"
-	$(Q)./htable-tree -f rotating -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-tree-rotating.$(TST_RND_CNT).dot
+	$(Q)./htable-tree -f rotating -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-tree-rotating.$(TST_RND_CNT).dot
 	$(Q)dot -Tpng -o $@-tree-rotating.$(TST_RND_CNT).png $@-tree-rotating.$(TST_RND_CNT).dot
 	$(Q)echo "htable-tree-avl-rotating"
-	$(Q)./htable-tree-avl -f rotating -s 10 -i $@.$(TST_RND_CNT).rnd -g $@-tree-avl-rotating.$(TST_RND_CNT).dot
+	$(Q)./htable-tree-avl -f rotating -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-tree-avl-rotating.$(TST_RND_CNT).dot
 	$(Q)dot -Tpng -o $@-tree-avl-rotating.$(TST_RND_CNT).png $@-tree-avl-rotating.$(TST_RND_CNT).dot
 
 test-binary-tree: binary-tree binary-tree-avl
