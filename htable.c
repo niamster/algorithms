@@ -392,6 +392,65 @@ rotating_hash(const char *key,
   return hash&mask;
 }
 
+/* From http://www.azillionmonkeys.com/qed/hash.html */
+#undef get16bits
+#if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__)    \
+    || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
+#define get16bits(d) (*((const unsigned short *) (d)))
+#else
+#define get16bits(d) ((((unsigned int)(((const uint8_t *)(d))[1])) << 8)    \
+            +(unsigned int)(((const uint8_t *)(d))[0]) )
+#endif
+
+unsigned int
+super_fast_hash(const char *key,
+        unsigned int len,
+        unsigned int mask)
+{
+    unsigned int hash = len, tmp;
+    int rem;
+
+    if (!key)
+        return 0;
+
+    rem = len & 3;
+    len >>= 2;
+
+    /* Main loop */
+    for (;len > 0; len--) {
+        hash  += get16bits (key);
+        tmp    = (get16bits (key+2) << 11) ^ hash;
+        hash   = (hash << 16) ^ tmp;
+        key  += 2*sizeof (unsigned short);
+        hash  += hash >> 11;
+    }
+
+    /* Handle end cases */
+    switch (rem) {
+        case 3: hash += get16bits (key);
+            hash ^= hash << 16;
+            hash ^= key[sizeof (unsigned short)] << 18;
+            hash += hash >> 11;
+            break;
+        case 2: hash += get16bits (key);
+            hash ^= hash << 11;
+            hash += hash >> 17;
+            break;
+        case 1: hash += *key;
+            hash ^= hash << 10;
+            hash += hash >> 1;
+    }
+
+    /* Force "avalanching" of final 127 bits */
+    hash ^= hash << 3;
+    hash += hash >> 5;
+    hash ^= hash << 4;
+    hash += hash >> 17;
+    hash ^= hash << 25;
+    hash += hash >> 6;
+
+    return hash&mask;
+}
 
 int
 usage(const char *prog)
@@ -415,7 +474,7 @@ int main(int argc, char **argv)
 
     const char *input_data = "/dev/random";
     struct key_value *data;
-    const unsigned char *key = NULL;
+    const unsigned char *key = "needle";
     struct sllist values;
     int limit = -1;
     const char *graph = NULL;
@@ -442,6 +501,8 @@ int main(int argc, char **argv)
                     hash_function = additive_hash;
                 else if (!strncmp(optarg, "rotating", 8))
                     hash_function = rotating_hash;
+                else if (!strncmp(optarg, "sfh", 3))
+                    hash_function = super_fast_hash;
                 else
                     return usage(argv[0]);
                 break;
