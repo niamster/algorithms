@@ -69,6 +69,9 @@ test-htable: htable-list htable-tree htable-tree-avl
 	$(Q)echo "htable-list-sfh"
 	$(Q)./htable-list -f sfh -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-list-sfh.$(TST_RND_CNT).dot
 	$(Q)if test "$(GENERATE_PNG)" = "yes"; then dot -Tpng -o $@-list-sfh.$(TST_RND_CNT).png $@-list-sfh.$(TST_RND_CNT).dot; fi
+	$(Q)echo "htable-list-bob-jenkin"
+	$(Q)./htable-list -f bob-jenkin -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-list-bob-jenkin.$(TST_RND_CNT).dot
+	$(Q)if test "$(GENERATE_PNG)" = "yes"; then dot -Tpng -o $@-list-bob-jenkin.$(TST_RND_CNT).png $@-list-bob-jenkin.$(TST_RND_CNT).dot; fi
 
 	$(Q)echo "htable-tree-additive"
 	$(Q)./htable-tree -f additive -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-tree-additive.$(TST_RND_CNT).dot
