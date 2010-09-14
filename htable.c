@@ -19,12 +19,14 @@
 typedef unsigned int (*hash_function_t)(const char *, unsigned int len, unsigned int prime);
 
 struct hash_node {
-    struct key_value *data;
 #if defined(HTABLE_LIST)
     struct sllist list;
 #elif defined(HTABLE_TREE)
     struct binary_tree tree;
 #endif
+    /* typeof(((struct key_value *)0)->key) key[sizeof(((struct key_value *)0)->key)]; */
+    unsigned char key[KEY_LEN];
+    struct key_value *data;
 };
 
 struct hash_table {
@@ -49,7 +51,7 @@ binary_tree_str_key_cmp(struct binary_tree *one,
     struct hash_node *_one = container_of(one, struct hash_node, tree);
     struct hash_node *_two = container_of(two, struct hash_node, tree);
 
-    return (cmp_result_t)int_sign(strcmp(_two->data->key, _one->data->key));
+    return (cmp_result_t)int_sign(strcmp(_two->key, _one->key));
 }
 #endif
 
@@ -241,6 +243,8 @@ construct_htable(struct key_value *data,
         }
 
         nodes[i].data = &data[i];
+        if (data[i].key)
+            memcpy(nodes[i].key, data[i].key, KEY_LEN);
 #if defined(HTABLE_LIST)
         sllist_add(&hash_table->table[hash], &nodes[i].list);
 #elif defined(HTABLE_TREE)
@@ -308,7 +312,7 @@ binary_tree_str_key_match(struct binary_tree *node,
     if (!key)
         return _node->data->key?cmp_result_greater:cmp_result_equal;
 
-    return (cmp_result_t)int_sign(strcmp(key, _node->data->key));
+    return (cmp_result_t)int_sign(strcmp(key, _node->key));
 }
 #endif
 
@@ -336,7 +340,7 @@ search_htable(struct hash_table *hash_table,
         if (!key) {
             if (node->data->key)
                 continue;
-        } else if (strcmp(key, node->data->key)) {
+        } else if (strcmp(key, node->key)) {
             continue;
         }
 
