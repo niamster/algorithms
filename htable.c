@@ -369,14 +369,14 @@ additive_hash(const char *key,
               unsigned int len,
               unsigned int bits)
 {
+    const char *end = key + len;
     unsigned int hash = len;
-	int c;
 
     if (!key)
         return 0;
 
-	while (c = *key++)
-	    hash += c;
+    while (key < end)
+	    hash += *key++;
 
 	return (((hash >> bits) ^ hash) & ((1 << bits) - 1));
 }
@@ -386,14 +386,14 @@ rotating_hash(const char *key,
               unsigned int len,
               unsigned int bits)
 {
+    const char *end = key + len;
     unsigned int hash = len;
-    int c;
 
     if (!key)
         return 0;
 
-    while (c = *key++)
-        hash = (hash<<4)^(hash>>28)^c;
+    while (key < end)
+        hash = (hash<<4)^(hash>>28)^*key++;
 
     return (((hash >> bits) ^ hash) & ((1 << bits) - 1));
 }
@@ -543,8 +543,7 @@ bob_jenkin_hash(const char *key,
     c = initval;         /* the previous hash value */
 
     /*---------------------------------------- handle most of the key */
-    while (l >= 12)
-    {
+    while (l >= 12) {
         a += (key[0] +((unsigned int)key[1]<<8) +((unsigned int)key[2]<<16) +((unsigned int)key[3]<<24));
         b += (key[4] +((unsigned int)key[5]<<8) +((unsigned int)key[6]<<16) +((unsigned int)key[7]<<24));
         c += (key[8] +((unsigned int)key[9]<<8) +((unsigned int)key[10]<<16)+((unsigned int)key[11]<<24));
@@ -554,8 +553,7 @@ bob_jenkin_hash(const char *key,
 
     /*------------------------------------- handle the last 11 bytes */
     c += len;
-    switch(l)              /* all the case statements fall through */
-    {
+    switch (l) {             /* all the case statements fall through */
         case 11: c+=((unsigned int)key[10]<<24);
         case 10: c+=((unsigned int)key[9]<<16);
         case 9 : c+=((unsigned int)key[8]<<8);
@@ -581,14 +579,14 @@ sdbm_hash(const char *key,
         unsigned int len,
         unsigned int bits)
 {
+    const char *end = key + len;
     unsigned int hash = 0;
-    int c;
 
     if (!key)
         return 0;
 
-    while (c = *key++)
-        hash = c + (hash << 6) + (hash << 16) - hash;
+    while (key < end)
+        hash = *key++ + (hash << 6) + (hash << 16) - hash;
 
     return (((hash >> bits) ^ hash) & ((1 << bits) - 1));
 }
@@ -608,7 +606,6 @@ fnva_hash(const char *key,
      * FNV-1a hash each octet in the buffer
      */
     while (key < end) {
-
         /* xor the bottom with the current octet */
         hash ^= *key++;
 
