@@ -593,6 +593,38 @@ sdbm_hash(const char *key,
     return hash&mask;
 }
 
+/* From http://www.isthe.com/chongo/src/fnv/ */
+#define FNV_32_PRIME 0x01000193
+
+unsigned int
+fnva_hash(const char *key,
+        unsigned int len,
+        unsigned int mask)
+{
+    const char *end = key + len;
+    unsigned int hash = FNV_32_PRIME;
+
+    /*
+     * FNV-1a hash each octet in the buffer
+     */
+    while (key < end) {
+
+        /* xor the bottom with the current octet */
+        hash ^= *key++;
+
+        /* multiply by the 32 bit FNV magic prime mod 2^32 */
+#if defined(NO_FNV_GCC_OPTIMIZATION)
+#warning GCC optimizations for FNV-a not used
+        hash *= FNV_32_PRIME;
+#else
+        hash += (hash<<1) + (hash<<4) + (hash<<7) + (hash<<8) + (hash<<24);
+#endif
+    }
+
+    /* return our new hash value */
+    return hash&mask;
+}
+
 
 int
 usage(const char *prog)
@@ -649,6 +681,8 @@ int main(int argc, char **argv)
                     hash_function = bob_jenkin_hash;
                 else if (!strncmp(optarg, "sdbm", 4))
                     hash_function = sdbm_hash;
+                else if (!strncmp(optarg, "fnva", 4))
+                    hash_function = fnva_hash;
                 else
                     return usage(argv[0]);
                 break;
