@@ -8,6 +8,8 @@ TST_RND_CNT := 100
 
 GENERATE_GRAPH := yes
 
+TST_HASH_SIZE := 1024
+
 RND_U32_OUT := u32.$(RND_CNT).rnd
 RND_32B_OUT  := 32b.$(RND_CNT).rnd
 
@@ -61,25 +63,25 @@ test-htable: htable-list htable-tree htable-tree-avl
 	$(Q)dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=32 status=noxfer >/dev/null 2>&1
 
 	$(Q)echo "htable-list-additive"
-	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-list -f additive -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-list-additive.$(TST_RND_CNT).dot; else ./htable-list -f additive -s 256 -i $@.$(TST_RND_CNT).rnd; fi
+	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-list -f additive -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd -g $@-list-additive.$(TST_RND_CNT).dot; else ./htable-list -f additive -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd; fi
 	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then dot -Tpng -o $@-list-additive.$(TST_RND_CNT).png $@-list-additive.$(TST_RND_CNT).dot; fi
 	$(Q)echo "htable-list-rotating"
-	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-list -f rotating -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-list-rotating.$(TST_RND_CNT).dot; else ./htable-list -f rotating -s 256 -i $@.$(TST_RND_CNT).rnd; fi
+	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-list -f rotating -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd -g $@-list-rotating.$(TST_RND_CNT).dot; else ./htable-list -f rotating -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd; fi
 	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then dot -Tpng -o $@-list-rotating.$(TST_RND_CNT).png $@-list-rotating.$(TST_RND_CNT).dot; fi
 	$(Q)echo "htable-list-sfh"
-	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-list -f sfh -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-list-sfh.$(TST_RND_CNT).dot; else ./htable-list -f sfh -s 256 -i $@.$(TST_RND_CNT).rnd; fi
+	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-list -f sfh -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd -g $@-list-sfh.$(TST_RND_CNT).dot; else ./htable-list -f sfh -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd; fi
 	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then dot -Tpng -o $@-list-sfh.$(TST_RND_CNT).png $@-list-sfh.$(TST_RND_CNT).dot; fi
 	$(Q)echo "htable-list-bob-jenkin"
-	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-list -f bob-jenkin -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-list-bob-jenkin.$(TST_RND_CNT).dot; else ./htable-list -f bob-jenkin -s 256 -i $@.$(TST_RND_CNT).rnd; fi
+	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-list -f bob-jenkin -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd -g $@-list-bob-jenkin.$(TST_RND_CNT).dot; else ./htable-list -f bob-jenkin -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd; fi
 	$(Q)echo "htable-list-sdbm"
-	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-list -f sdbm -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-list-sdbm.$(TST_RND_CNT).dot; else ./htable-list -f sdbm -s 256 -i $@.$(TST_RND_CNT).rnd; fi
+	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-list -f sdbm -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd -g $@-list-sdbm.$(TST_RND_CNT).dot; else ./htable-list -f sdbm -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd; fi
 	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then dot -Tpng -o $@-list-sdbm.$(TST_RND_CNT).png $@-list-sdbm.$(TST_RND_CNT).dot; fi
 
 	$(Q)echo "htable-tree-additive"
-	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-tree -f additive -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-tree-additive.$(TST_RND_CNT).dot; else ./htable-tree -f additive -s 256 -i $@.$(TST_RND_CNT).rnd; fi
+	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-tree -f additive -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd -g $@-tree-additive.$(TST_RND_CNT).dot; else ./htable-tree -f additive -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd; fi
 	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then dot -Tpng -o $@-tree-additive.$(TST_RND_CNT).png $@-tree-additive.$(TST_RND_CNT).dot; fi
 	$(Q)echo "htable-tree-avl-additive"
-	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-tree-avl -f additive -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-tree-avl-additive.$(TST_RND_CNT).dot; else ./htable-tree-avl -f additive -s 256 -i $@.$(TST_RND_CNT).rnd; fi
+	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-tree-avl -f additive -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd -g $@-tree-avl-additive.$(TST_RND_CNT).dot; else ./htable-tree-avl -f additive -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd; fi
 	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then dot -Tpng -o $@-tree-avl-additive.$(TST_RND_CNT).png $@-tree-avl-additive.$(TST_RND_CNT).dot; fi
 
 test-binary-tree: binary-tree binary-tree-avl
