@@ -54,7 +54,7 @@ rnd-32b:
 	$(Q)dd if=/dev/urandom of=$(RND_32B_OUT) bs=$(RND_CNT) count=32 status=noxfer >/dev/null 2>&1
 
 test-qsort: qsort
-	$(Q)if test "$(TST_REGEN_RND)" = "yes" -a -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
+	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
 
 	$(Q)echo "qsort-1"
 	$(Q)./qsort -s QS1 -i $@.$(TST_RND_CNT).rnd --dump
@@ -62,7 +62,7 @@ test-qsort: qsort
 	$(Q)./qsort -s QS2 -i $@.$(TST_RND_CNT).rnd --dump
 
 test-htable: htable-list htable-tree htable-tree-avl
-	$(Q)if test "$(TST_REGEN_RND)" = "yes" -a -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=32 status=noxfer >/dev/null 2>&1; fi
+	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=32 status=noxfer >/dev/null 2>&1; fi
 
 	$(Q)echo "htable-list-additive"
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then ./htable-list -f additive -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd -g $@-list-additive.$(TST_RND_CNT).dot; else ./htable-list -f additive -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd; fi
@@ -87,7 +87,7 @@ test-htable: htable-list htable-tree htable-tree-avl
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then dot -Tpng -o $@-tree-avl-additive.$(TST_RND_CNT).png $@-tree-avl-additive.$(TST_RND_CNT).dot; fi
 
 test-binary-tree: binary-tree binary-tree-avl
-	$(Q)if test "$(TST_REGEN_RND)" = "yes" -a -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
+	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
 
 	$(Q)echo "binary-tree"
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then ./binary-tree -i $@.$(TST_RND_CNT).rnd -g $@.$(TST_RND_CNT).dot; else ./binary-tree -i $@.$(TST_RND_CNT).rnd; fi
