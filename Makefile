@@ -71,7 +71,9 @@ test-htable: htable-list htable-tree htable-tree-avl
 	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then dot -Tpng -o $@-list-sfh.$(TST_RND_CNT).png $@-list-sfh.$(TST_RND_CNT).dot; fi
 	$(Q)echo "htable-list-bob-jenkin"
 	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-list -f bob-jenkin -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-list-bob-jenkin.$(TST_RND_CNT).dot; else ./htable-list -f bob-jenkin -s 256 -i $@.$(TST_RND_CNT).rnd; fi
-	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then dot -Tpng -o $@-list-bob-jenkin.$(TST_RND_CNT).png $@-list-bob-jenkin.$(TST_RND_CNT).dot; fi
+	$(Q)echo "htable-list-sdbm"
+	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-list -f sdbm -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-list-sdbm.$(TST_RND_CNT).dot; else ./htable-list -f sdbm -s 256 -i $@.$(TST_RND_CNT).rnd; fi
+	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then dot -Tpng -o $@-list-sdbm.$(TST_RND_CNT).png $@-list-sdbm.$(TST_RND_CNT).dot; fi
 
 	$(Q)echo "htable-tree-additive"
 	$(Q)if test "$(GENERATE_GRAPH)" = "yes"; then ./htable-tree -f additive -s 256 -i $@.$(TST_RND_CNT).rnd -g $@-tree-additive.$(TST_RND_CNT).dot; else ./htable-tree -f additive -s 256 -i $@.$(TST_RND_CNT).rnd; fi

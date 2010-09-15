@@ -528,7 +528,7 @@ acceptable.  Do NOT use for cryptographic purposes.
 */
 
 unsigned int
-bob_jenkin_hash(unsigned char *key,
+bob_jenkin_hash(const char *key,
         unsigned int len,
         unsigned int mask)
 {
@@ -573,6 +573,24 @@ bob_jenkin_hash(unsigned char *key,
     /*-------------------------------------------- report the result */
     return c&mask;
 }
+
+unsigned int
+sdbm_hash(const char *key,
+        unsigned int len,
+        unsigned int mask)
+{
+    unsigned int hash = 0;
+    int c;
+
+    if (!key)
+        return 0;
+
+    while (c = *key++)
+        hash = c + (hash << 6) + (hash << 16) - hash;
+
+    return hash&mask;
+}
+
 
 int
 usage(const char *prog)
@@ -626,7 +644,9 @@ int main(int argc, char **argv)
                 else if (!strncmp(optarg, "sfh", 3))
                     hash_function = super_fast_hash;
                 else if (!strncmp(optarg, "bob-jenkin", 10))
-                    hash_function = super_fast_hash;
+                    hash_function = bob_jenkin_hash;
+                else if (!strncmp(optarg, "sdbm", 4))
+                    hash_function = sdbm_hash;
                 else
                     return usage(argv[0]);
                 break;
