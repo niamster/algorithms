@@ -204,6 +204,8 @@ construct_htable(struct key_value *data,
     int i;
     struct hash_node *nodes;
 
+    hash_size = roundup_pow_of_two(hash_size);
+
 #if defined(HTABLE_LIST)
     if (!(hash_table->table = malloc(hash_size*sizeof(struct sllist)))) {
         fprintf(stderr, "Error error allocating %d bytes: %s", hash_size*sizeof(struct sllist), strerror(errno));
@@ -216,8 +218,8 @@ construct_htable(struct key_value *data,
     }
 #endif
 
-    hash_table->entries = roundup_pow_of_two(hash_size);
-    hash_table->mask = (1 << ilog2(hash_table->entries)) - 1;
+    hash_table->entries = hash_size;
+    hash_table->mask = (1 << ilog2(hash_size)) - 1;
     hash_table->hash_function = hash_function;
 
     for (i=0;i<hash_size;++i) {
