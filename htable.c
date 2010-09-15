@@ -16,7 +16,7 @@
 #error Unknown storage type for handling hash table data
 #endif
 
-typedef unsigned int (*hash_function_t)(const char *, unsigned int len, unsigned int prime);
+typedef unsigned int (*hash_function_t)(const char *, unsigned int len, unsigned int bits);
 
 struct hash_node {
 #if defined(HTABLE_LIST)
@@ -31,7 +31,7 @@ struct hash_node {
 
 struct hash_table {
     hash_function_t hash_function;
-    unsigned int mask;
+    unsigned int bits;
 #if defined(HTABLE_LIST)
     struct sllist *table;
 #elif defined(HTABLE_TREE)
@@ -219,7 +219,7 @@ construct_htable(struct key_value *data,
 #endif
 
     hash_table->entries = hash_size;
-    hash_table->mask = (1 << ilog2(hash_size)) - 1;
+    hash_table->bits = ilog2(hash_size);
     hash_table->hash_function = hash_function;
 
     for (i=0;i<hash_size;++i) {
@@ -238,7 +238,7 @@ construct_htable(struct key_value *data,
     nodes = *pool;
 
     for (i=0;i<count;++i) {
-        int hash = hash_function(data[i].key, data[i].key?strlen(data[i].key):0, hash_table->mask);
+        int hash = hash_function(data[i].key, data[i].key?strlen(data[i].key):0, hash_table->bits);
         if (hash >= hash_size) { /* sanity checks */
             fprintf(stderr, "Invalid hash: %d for %s, skipping element\n", hash, data[i].key);
             continue;
@@ -328,7 +328,7 @@ search_htable(struct hash_table *hash_table,
     struct sllist *e;
 #endif
 
-    int hash = hash_table->hash_function(key, key?strlen(key):0, hash_table->mask);
+    int hash = hash_table->hash_function(key, key?strlen(key):0, hash_table->bits);
     if (hash >= hash_table->entries) { /* sanity checks */
         fprintf(stderr, "Invalid hash: %d for %s\n", hash, key);
         return;
@@ -367,7 +367,7 @@ search_htable(struct hash_table *hash_table,
 unsigned int
 additive_hash(const char *key,
               unsigned int len,
-              unsigned int mask)
+              unsigned int bits)
 {
     unsigned int hash = len;
 	int c;
@@ -378,13 +378,13 @@ additive_hash(const char *key,
 	while (c = *key++)
 	    hash += c;
 
-	return hash&mask;
+	return (((hash >> bits) ^ hash) & ((1 << bits) - 1));
 }
 
 unsigned int
 rotating_hash(const char *key,
               unsigned int len,
-              unsigned int mask)
+              unsigned int bits)
 {
     unsigned int hash = len;
     int c;
@@ -395,7 +395,7 @@ rotating_hash(const char *key,
     while (c = *key++)
         hash = (hash<<4)^(hash>>28)^c;
 
-    return hash&mask;
+    return (((hash >> bits) ^ hash) & ((1 << bits) - 1));
 }
 
 /* From http://www.azillionmonkeys.com/qed/hash.html */
@@ -411,7 +411,7 @@ rotating_hash(const char *key,
 unsigned int
 super_fast_hash(const char *key,
         unsigned int len,
-        unsigned int mask)
+        unsigned int bits)
 {
     unsigned int hash = len, tmp;
     int rem;
@@ -455,7 +455,7 @@ super_fast_hash(const char *key,
     hash ^= hash << 25;
     hash += hash >> 6;
 
-    return hash&mask;
+    return (((hash >> bits) ^ hash) & ((1 << bits) - 1));
 }
 
 /* From http://burtleburtle.net/bob/hash/doobs.html */
@@ -532,7 +532,7 @@ acceptable.  Do NOT use for cryptographic purposes.
 unsigned int
 bob_jenkin_hash(const char *key,
         unsigned int len,
-        unsigned int mask)
+        unsigned int bits)
 {
     unsigned int initval = 0;  /* the previous hash, or an arbitrary value */
     unsigned int a, b, c, l;
@@ -573,13 +573,13 @@ bob_jenkin_hash(const char *key,
     mix(a,b,c);
 
     /*-------------------------------------------- report the result */
-    return c&mask;
+    return (((c >> bits) ^ c) & ((1 << bits) - 1));
 }
 
 unsigned int
 sdbm_hash(const char *key,
         unsigned int len,
-        unsigned int mask)
+        unsigned int bits)
 {
     unsigned int hash = 0;
     int c;
@@ -590,7 +590,7 @@ sdbm_hash(const char *key,
     while (c = *key++)
         hash = c + (hash << 6) + (hash << 16) - hash;
 
-    return hash&mask;
+    return (((hash >> bits) ^ hash) & ((1 << bits) - 1));
 }
 
 /* From http://www.isthe.com/chongo/src/fnv/ */
@@ -599,7 +599,7 @@ sdbm_hash(const char *key,
 unsigned int
 fnva_hash(const char *key,
         unsigned int len,
-        unsigned int mask)
+        unsigned int bits)
 {
     const char *end = key + len;
     unsigned int hash = FNV_32_PRIME;
@@ -622,7 +622,7 @@ fnva_hash(const char *key,
     }
 
     /* return our new hash value */
-    return hash&mask;
+    return (((hash >> bits) ^ hash) & ((1 << bits) - 1));
 }
 
 
@@ -722,7 +722,7 @@ int main(int argc, char **argv)
     gettimeofday(&tb, NULL);
     construct_htable(data, count, &hash_table, hash_size, hash_function, &pool);
     gettimeofday(&ta, NULL);
-    printf("Hash entries: %u mask: 0x%08X\n", hash_table.entries, hash_table.mask);
+    printf("Hash entries: %u bits: %d\n", hash_table.entries, hash_table.bits);
     usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
     secs = usecs/1000000;
     usecs %= 1000000;
