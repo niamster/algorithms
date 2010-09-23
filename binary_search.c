@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <getopt.h>
 
 #include "helpers.h"
@@ -6,25 +7,25 @@
 extern void quick_sort1(unsigned int *array, unsigned int count);
 
 int
-bsearch(unsigned int *array,
+binary_search(unsigned int *array,
         unsigned int count,
         unsigned int needle)
 {
 	unsigned int p = count >>= 1;
+    unsigned int shift;
 
 	while (count) {
 		if (array[p] == needle)
 			return p;
 
-		count >>= 1;
-        if (count == 0)
-            ++count;
+        shift = (count + 1) >> 1;
 
 		if (needle > array[p]) {
-			p += count;
+			p += shift;
         } else {
-			p -= count;
+			p -= shift;
         }
+        count >>= 1;
 	}
 
     if (array[p] == needle)     /* One element case */
@@ -90,7 +91,7 @@ int main(int argc, char **argv)
     {
         unsigned int i;
         for (i=0;i<count;++i) {
-            int pos = bsearch(array, count, array[i]);
+            int pos = binary_search(array, count, array[i]);
             if ((unsigned int)pos == -1 || array[i] != array[pos]) {
                 fprintf(stderr, "Element %u(%u) was not found. Index returned: %d\n", i, array[i], pos);
                 goto out;

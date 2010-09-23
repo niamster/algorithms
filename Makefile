@@ -1,6 +1,6 @@
 CC		:= gcc
 CFLAGS	:= -O3
-ALGOS	:= qsort bsearch htable-list htable-tree binary-tree binary-tree-avl
+ALGOS	:= qsort binary-search htable-list htable-tree binary-tree binary-tree-avl
 LDFLAGS := -lpthread
 
 RND_CNT := 1000000
@@ -47,7 +47,7 @@ binary-tree: binary_tree.c $(HELPERS)
 binary-tree-avl: binary_tree.c $(HELPERS)
 	$(Q)$(CC) $^ -DBINARY_TREE_MAIN -DBINARY_TREE_AVL $(CFLAGS) -o $@ $(LDFLAGS)
 
-bsearch: bsearch.c qsort.c $(HELPERS)
+binary-search: binary_search.c qsort.c $(HELPERS)
 	$(Q)$(CC) $^ -DQSORT_MOD $(CFLAGS) -o $@ $(LDFLAGS)
 
 .PHONY: rnd.u32 rnd.32b
@@ -99,11 +99,11 @@ test-binary-tree: binary-tree binary-tree-avl
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then ./binary-tree-avl -i $@.$(TST_RND_CNT).rnd -g $@-avl.$(TST_RND_CNT).dot; else ./binary-tree-avl -i $@.$(TST_RND_CNT).rnd; fi
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then dot -Tpng -o $@-avl.$(TST_RND_CNT).png $@-avl.$(TST_RND_CNT).dot; fi
 
-test-bsearch: bsearch
+test-binary-search: binary-search
 	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
 
-	$(Q)echo "bsearch"
-	$(Q)./bsearch -i $@.$(TST_RND_CNT).rnd --dump
+	$(Q)echo "binary-search"
+	$(Q)./binary-search -i $@.$(TST_RND_CNT).rnd --dump
 
 clean:
 	$(Q)rm -rf $(ALGOS)
