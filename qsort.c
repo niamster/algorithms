@@ -17,8 +17,8 @@ struct sort_data {
     quick_sort_fn quick_sort;
     quick_sort_fn quick_sort_thread;
     unsigned int *array;
-    int count;
-    int max_threads;
+    unsigned int count;
+    unsigned int max_threads;
     pthread_t thread;
 };
 
@@ -54,11 +54,11 @@ __quick_sort1(struct sort_data *data)
         },
     };
     unsigned int *array = data->array;
-    int count = data->count;
-    int m = (count-1)/2;
-    int l, r;
+    unsigned int count = data->count;
+    unsigned int m = (count-1)/2;
+    unsigned int l, r;
     unsigned int *l_array, *r_array;
-    int l_count = 0, r_count = 0;
+    unsigned int l_count = 0, r_count = 0;
     unsigned int pivot;
 
     if (count <= 1)
@@ -109,10 +109,10 @@ __quick_sort1(struct sort_data *data)
 
 /* void */
 /* __quick_sort2_v0(unsigned int *array, */
-/*                  int l, int r) */
+/*                  unsigned int l, unsigned int r) */
 /* { */
-/*     int m = (l+r)/2; */
-/*     int i, s; */
+/*     unsigned int m = (l+r)/2; */
+/*     unsigned int i, s; */
 /*     unsigned int pivot; */
 
 /*     if (l >= r) */
@@ -136,7 +136,7 @@ __quick_sort1(struct sort_data *data)
 
 /* void */
 /* quick_sort2_v0(unsigned int *array, */
-/*                int count) */
+/*                unsigned int count) */
 /* { */
 /*     __quick_sort2_v0(array, 0, count-1); */
 /* } */
@@ -155,10 +155,10 @@ __quick_sort2_v1(struct sort_data *data)
         },
     };
     unsigned int *array = data->array;
-    int count = data->count;
-    int l = 0, r = count-1;
-    int m = (count-1)/2;
-    int i, s;
+    unsigned int count = data->count;
+    unsigned int l = 0, r = count-1;
+    unsigned int m = (count-1)/2;
+    unsigned int i, s;
     unsigned int pivot;
 
     if (l >= r)
@@ -198,7 +198,7 @@ __quick_sort2_v1(struct sort_data *data)
 
 void
 quick_sort2(unsigned int *array,
-            int count)
+            unsigned int count)
 {
     struct sort_data sort_data = {
         .quick_sort = __quick_sort2_v1,
@@ -210,7 +210,7 @@ quick_sort2(unsigned int *array,
 
 void
 quick_sort1(unsigned int *array,
-            int count)
+            unsigned int count)
 {
     struct sort_data sort_data = {
         .quick_sort = __quick_sort1,
@@ -221,8 +221,8 @@ quick_sort1(unsigned int *array,
 }
 
 void quick_sort1_parallel(unsigned int *array,
-                          int count,
-                          int threads)
+                          unsigned int count,
+                          unsigned int threads)
 {
     struct sort_data sort_data = {
         .quick_sort = __quick_sort1,
@@ -235,8 +235,8 @@ void quick_sort1_parallel(unsigned int *array,
 }
 
 void quick_sort2_parallel(unsigned int *array,
-                          int count,
-                          int threads)
+                          unsigned int count,
+                          unsigned int threads)
 {
     struct sort_data sort_data = {
         .quick_sort = __quick_sort2_v1,
@@ -248,6 +248,7 @@ void quick_sort2_parallel(unsigned int *array,
     __quick_sort2_v1(&sort_data);
 }
 
+#ifndef QSORT_MOD
 enum sort_variant {
     sort_variant_qs1,
     sort_variant_qs2
@@ -261,15 +262,15 @@ usage(const char *prog)
     return 1;
 }
 
-int main(int argc, char **argv)
+int main(unsigned int argc, char **argv)
 {
     struct timeval tb, ta;
     unsigned long secs, msecs, usecs;
 
     int dump = 0;
     int sort_variant = -1;
-    int count = 0;
-    int threads = 0;
+    unsigned int count = 0;
+    unsigned int threads = 0;
     const char *input_data = "/dev/random", *output_data = NULL;
     unsigned int *array;
 
@@ -317,9 +318,12 @@ int main(int argc, char **argv)
 
     if (generate_array(&array, &count, input_data) == -1)
         return 1;
+
     printf("Elements: %d\n", count);
-    if (dump)
+    if (dump) {
+        printf("\nOriginal array:\n");
         print_array(array, count);
+    }
 
     switch (sort_variant) {
         case sort_variant_qs1:
@@ -350,8 +354,10 @@ int main(int argc, char **argv)
     usecs %= 1000;
     printf("Sort time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
 
-    if (dump)
+    if (dump) {
+        printf("\nSorted array:\n");
         print_array(array, count);
+    }
 
     if (output_data) {
         int d = open(output_data, O_WRONLY|O_CREAT, 0666);
@@ -370,3 +376,4 @@ int main(int argc, char **argv)
 
     return 0;
 }
+#endif
