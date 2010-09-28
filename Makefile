@@ -10,7 +10,7 @@ TST_GEN_GRAPH := yes
 
 TST_REGEN_RND := no
 
-TST_HASH_SIZE := 1024
+TST_HASH_SIZE := 256
 
 RND_U32_OUT := u32.$(RND_CNT).rnd
 RND_32B_OUT  := 32b.$(RND_CNT).rnd
