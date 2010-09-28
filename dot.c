@@ -96,16 +96,33 @@ dot_dump_link_node_to_node(FILE *out,
 }
 
 void
+dot_dump_node_colored(FILE *out,
+        const char *label,
+        int id,
+        const char *name,
+        const char *txt_color,
+        const char *edge_color,
+        const char *bg_color)
+{
+    char *_name = escape_quotes(name);
+
+    if (bg_color)
+        fprintf(out, "    %s_%d [label=\"%s\",fontcolor=\"%s\",color=\"%s\",fillcolor=\"%s\",style=\"filled\"];\n",
+                label, id, _name, txt_color, edge_color, bg_color);
+    else
+        fprintf(out, "    %s_%d [label=\"%s\",fontcolor=\"%s\",color=\"%s\"];\n",
+                label, id, _name, txt_color, edge_color);
+
+    free(_name);
+}
+
+void
 dot_dump_node(FILE *out,
               const char *label,
               int id,
               const char *name)
 {
-    char *_name = escape_quotes(name);
-
-    fprintf(out, "    %s_%d [label=\"%s\"];\n", label, id, _name);
-
-    free(_name);
+    dot_dump_node_colored(out, label, id, name, "black", "black", NULL);
 }
 
 void
