@@ -35,8 +35,8 @@ escape_quotes(const char *str)
 
 void
 dot_dump_begin(FILE *out,
-               const char *label,
-               dot_graph_direction_t direction)
+        const char *label,
+        dot_graph_direction_t direction)
 {
     fprintf(out, "digraph %s {\n", label);
     fprintf(out, "    graph [center rankdir=%s]\n", dot_graph_directions[direction]);
@@ -50,8 +50,8 @@ dot_dump_end(FILE *out)
 
 void
 dot_dump_table(FILE *out,
-                    const char *label,
-                    int size)
+        const char *label,
+        int size)
 {
     int i;
 
@@ -67,68 +67,62 @@ dot_dump_table(FILE *out,
 
 void
 dot_dump_link_table_to_sllist_head(FILE *out,
-                                   const char *src_label,
-                                   int src_id,
-                                   const char *dst_label,
-                                   int dst_id)
+        const char *src_label,
+        int src_id,
+        const char *dst_label,
+        int dst_id)
 {
     fprintf(out, "    \"%s\":%s_%d -> %s_%d_0;\n", src_label, src_label, src_id, dst_label, dst_id);
 }
 
 void
 dot_dump_link_table_to_node(FILE *out,
-                            const char *src_label,
-                            int src_id,
-                            const char *dst_label,
-                            int dst_id)
+        const char *src_label,
+        int src_id,
+        const char *dst_label,
+        int dst_id)
 {
     fprintf(out, "    \"%s\":%s_%d -> %s_%d;\n", src_label, src_label, src_id, dst_label, dst_id);
 }
 
 void
 dot_dump_link_node_to_node(FILE *out,
-                           const char *src_label,
-                           int src_id,
-                           const char *dst_label,
-                           int dst_id)
+        const char *src_label,
+        int src_id,
+        const char *dst_label,
+        int dst_id)
 {
     fprintf(out, "    %s_%d -> %s_%d;\n", src_label, src_id, dst_label, dst_id);
 }
 
 void
-dot_dump_node_colored(FILE *out,
+dot_dump_shape_colored(FILE *out,
         const char *label,
         int id,
         const char *name,
         const char *txt_color,
         const char *edge_color,
-        const char *bg_color)
+        const char *bg_color,
+        const char *shape)
 {
     char *_name = escape_quotes(name);
 
+    shape = shape?:"circle";
+
     if (bg_color)
-        fprintf(out, "    %s_%d [label=\"%s\",fontcolor=\"%s\",color=\"%s\",fillcolor=\"%s\",style=\"filled\"];\n",
-                label, id, _name, txt_color, edge_color, bg_color);
+        fprintf(out, "    %s_%d [label=\"%s\",fontcolor=\"%s\",color=\"%s\",fillcolor=\"%s\",style=\"filled\",shape=\"%s\"];\n",
+                label, id, _name, txt_color, edge_color, bg_color, shape);
     else
-        fprintf(out, "    %s_%d [label=\"%s\",fontcolor=\"%s\",color=\"%s\"];\n",
-                label, id, _name, txt_color, edge_color);
+        fprintf(out, "    %s_%d [label=\"%s\",fontcolor=\"%s\",color=\"%s\",shape=\"%s\"];\n",
+                label, id, _name, txt_color, edge_color, shape);
 
     free(_name);
 }
 
 void
-dot_dump_node(FILE *out,
-              const char *label,
-              int id,
-              const char *name)
-{
-    dot_dump_node_colored(out, label, id, name, "black", "black", NULL);
-}
-
-void
 __dot_dump_header(FILE *out,
-                  const char *label,
-                  unsigned int idx)
+        const char *label,
+        unsigned int idx)
 {
     fprintf(out, "    subgraph %s%u {\n", label, idx);
 }
@@ -141,12 +135,12 @@ __dot_dump_footer(FILE *out)
 
 void
 __dot_dump_sllist_node(FILE *out,
-                       const char *label,
-                       unsigned int idx,
-                       unsigned int pos,
-                       struct sllist *head,
-                       struct sllist *node,
-                       const char *name)
+        const char *label,
+        unsigned int idx,
+        unsigned int pos,
+        struct sllist *head,
+        struct sllist *node,
+        const char *name)
 {
     char *_name = escape_quotes(name);
 

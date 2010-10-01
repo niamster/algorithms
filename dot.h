@@ -40,18 +40,20 @@ void dot_dump_link_node_to_node(FILE *out,
         const char *dst_label,
         int dst_id);
 
-void dot_dump_node(FILE *out,
-        const char *label,
-        int id,
-        const char *name);
+#define dot_dump_node(out, label, id, name)                             \
+    dot_dump_shape_colored(out, label, id, name, "black", "black", NULL, NULL)
 
-void dot_dump_node_colored(FILE *out,
+
+/* Acceptable node shapes:
+   circle, box, triangle, invtriangle, ellipse, diamond, parallelogram*/
+void dot_dump_shape_colored(FILE *out,
         const char *label,
         int id,
         const char *name,
         const char *txt_color,
         const char *edge_color,
-        const char *bg_color);
+        const char *bg_color,
+        const char *shape);
 
 #define dot_dump_sllist(out, label, idx, head, type, member, name)  \
     do {                                                            \
