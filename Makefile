@@ -30,7 +30,7 @@ HELPERS = __helpers.c dot.c
 all: $(ALGOS)
 
 qsort: qsort.c $(HELPERS)
-	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
+	$(Q)$(CC) -DQSORT_MAIN $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
 htable-list: htable.c $(HELPERS)
 	$(Q)$(CC) $^ -DHTABLE_LIST $(CFLAGS) -o $@ $(LDFLAGS)
@@ -48,7 +48,7 @@ binary-tree-avl: binary_tree.c $(HELPERS)
 	$(Q)$(CC) $^ -DBINARY_TREE_MAIN -DBINARY_TREE_AVL $(CFLAGS) -o $@ $(LDFLAGS)
 
 binary-search: binary_search.c qsort.c $(HELPERS)
-	$(Q)$(CC) $^ -DQSORT_MOD $(CFLAGS) -o $@ $(LDFLAGS)
+	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
 .PHONY: rnd.u32 rnd.32b
 rnd-u32:

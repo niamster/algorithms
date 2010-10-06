@@ -3,8 +3,7 @@
 #include <getopt.h>
 
 #include "helpers.h"
-
-extern void quick_sort1(unsigned int *array, unsigned int count);
+#include "qsort.h"
 
 int
 binary_search(unsigned int *array,
