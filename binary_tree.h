@@ -9,10 +9,18 @@ struct binary_tree {
     struct binary_tree *left;
     struct binary_tree *right;
     unsigned int weight;
-#ifdef BINARY_TREE_AVL
+#if defined(BINARY_TREE_AVL)
     int balance;
+#elif defined(BINARY_TREE_RB)
+#define BINARY_TREE_RB_RED 0
+#define BINARY_TREE_RB_BLACK 1
+    unsigned int color;
 #endif
 };
+
+#if defined(BINARY_TREE_RB)
+#define BINARY_TREE_RB_NODE_COLOR(node) ((node)!=BINARY_TREE_EMPTY_BRANCH?(node)->color:BINARY_TREE_RB_BLACK)
+#endif
 
 typedef cmp_result_t (*binary_tree_cmp_cbk_t)(struct binary_tree *, struct binary_tree *);
 typedef cmp_result_t (*binary_tree_key_match_cbk_t)(struct binary_tree *, void *);
@@ -22,7 +30,7 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
 #define BINARY_TREE_DIRECTION_RIGHT(res) ((res) == cmp_result_greater || (res) == cmp_result_equal)
 #define BINARY_TREE_EMPTY_BRANCH ((struct binary_tree *)NULL)
 
-#ifdef BINARY_TREE_AVL
+#if defined(BINARY_TREE_AVL)
 #define binary_tree_init_root(root)             \
     do {                                        \
         (root)->parent = (root);                \
@@ -30,6 +38,15 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
         (root)->right = (root);                 \
         (root)->weight = -1;                    \
         (root)->balance = -1;                   \
+    } while (0)
+#elif defined(BINARY_TREE_RB)
+#define binary_tree_init_root(root)             \
+    do {                                        \
+        (root)->parent = (root);                \
+        (root)->left = (root);                  \
+        (root)->right = (root);                 \
+        (root)->weight = -1;                    \
+        (root)->color = -1;                     \
     } while (0)
 #else
 #define binary_tree_init_root(root)             \
@@ -41,7 +58,7 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
     } while (0)
 #endif
 
-#ifdef BINARY_TREE_AVL
+#if defined(BINARY_TREE_AVL)
 #define binary_tree_init_node(node)                 \
     do {                                            \
         (node)->parent = (node);                    \
@@ -49,6 +66,15 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
         (node)->right = BINARY_TREE_EMPTY_BRANCH;   \
         (node)->weight = 0;                         \
         (node)->balance = 0;                        \
+    } while (0)
+#elif defined(BINARY_TREE_RB)
+#define binary_tree_init_node(node)                 \
+    do {                                            \
+        (node)->parent = (node);                    \
+        (node)->left = BINARY_TREE_EMPTY_BRANCH;    \
+        (node)->right = BINARY_TREE_EMPTY_BRANCH;   \
+        (node)->weight = 0;                         \
+        (node)->color = BINARY_TREE_RB_RED;         \
     } while (0)
 #else
 #define binary_tree_init_node(node)                 \
@@ -66,6 +92,18 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
 #define binary_tree_empty_root(root) ((root)->left == (root) && (root)->right == (root))
 #define binary_tree_node(root) (binary_tree_root_node(root)?(root)->left:(root))
 
+#if defined(BINARY_TREE_RB)
+#define binary_tree_add(root, node, cmp)                            \
+    do {                                                            \
+        if (binary_tree_empty_root(root)) {                         \
+            (root)->left = (root)->right = (node);                  \
+            (node)->parent = (root);                                \
+            (node)->color = BINARY_TREE_RB_BLACK;                   \
+        } else {                                                    \
+            __binary_tree_add((root)->left, node, cmp);             \
+        }                                                           \
+    } while (0)
+#else
 #define binary_tree_add(root, node, cmp)                            \
     do {                                                            \
         if (binary_tree_empty_root(root)) {                         \
@@ -75,6 +113,7 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
             __binary_tree_add((root)->left, node, cmp);             \
         }                                                           \
     } while (0)
+#endif
 
 #define binary_tree_detach(node)                                \
     do {                                                        \

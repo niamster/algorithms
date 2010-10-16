@@ -1,6 +1,6 @@
 CC		:= gcc
 CFLAGS	:= -O3
-ALGOS	:= qsort binary-search htable-list htable-tree binary-tree binary-tree-avl
+ALGOS	:= qsort binary-search htable-list htable-tree binary-tree binary-tree-avl binary-tree-rb
 LDFLAGS := -lpthread
 
 RND_CNT := 1000000
@@ -47,6 +47,9 @@ binary-tree: binary_tree.c $(HELPERS)
 binary-tree-avl: binary_tree.c $(HELPERS)
 	$(Q)$(CC) $^ -DBINARY_TREE_MAIN -DBINARY_TREE_AVL $(CFLAGS) -o $@ $(LDFLAGS)
 
+binary-tree-rb: binary_tree.c $(HELPERS)
+	$(Q)$(CC) $^ -DBINARY_TREE_MAIN -DBINARY_TREE_RB $(CFLAGS) -o $@ $(LDFLAGS)
+
 binary-search: binary_search.c qsort.c $(HELPERS)
 	$(Q)$(CC) $^ -DQSORT_MOD $(CFLAGS) -o $@ $(LDFLAGS)
 
@@ -89,7 +92,7 @@ test-htable: htable-list htable-tree htable-tree-avl
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then ./htable-tree-avl -f additive -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd -g $@-tree-avl-additive.$(TST_RND_CNT).dot; else ./htable-tree-avl -f additive -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd; fi
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then dot -Tpng -o $@-tree-avl-additive.$(TST_RND_CNT).png $@-tree-avl-additive.$(TST_RND_CNT).dot; fi
 
-test-binary-tree: binary-tree binary-tree-avl
+test-binary-tree: binary-tree binary-tree-avl binary-tree-rb
 	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
 
 	$(Q)echo "binary-tree"
@@ -98,6 +101,9 @@ test-binary-tree: binary-tree binary-tree-avl
 	$(Q)echo "binary-tree-avl"
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then ./binary-tree-avl -i $@.$(TST_RND_CNT).rnd -g $@-avl.$(TST_RND_CNT).dot; else ./binary-tree-avl -i $@.$(TST_RND_CNT).rnd; fi
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then dot -Tpng -o $@-avl.$(TST_RND_CNT).png $@-avl.$(TST_RND_CNT).dot; fi
+	$(Q)echo "binary-tree-rb"
+	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then ./binary-tree-rb -i $@.$(TST_RND_CNT).rnd -g $@-rb.$(TST_RND_CNT).dot; else ./binary-tree-rb -i $@.$(TST_RND_CNT).rnd; fi
+	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then dot -Tpng -o $@-rb.$(TST_RND_CNT).png $@-rb.$(TST_RND_CNT).dot; fi
 
 test-binary-search: binary-search
 	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi

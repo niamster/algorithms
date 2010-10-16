@@ -5,7 +5,7 @@
 
 #include "binary_tree.h"
 
-#ifdef BINARY_TREE_AVL
+#if defined(BINARY_TREE_AVL)
 struct binary_tree *
 binary_tree_avl_big_right_turn(struct binary_tree *node,
                                struct binary_tree *pivot,
@@ -234,6 +234,154 @@ binary_tree_avl_rebalance_on_delete(struct binary_tree *node)
         p = p->parent;
     }
 }
+#elif defined(BINARY_TREE_RB)
+void
+binary_tree_rb_rotate_left(struct binary_tree *node)
+{
+    struct binary_tree *p = node->parent, **pp0, **pp1, *r = node->right;
+
+    pp0 = (p->left == node)?&p->left:&p->right;
+    if (binary_tree_root_node(p))
+        pp1 = &p->right;
+    else
+        pp1 = pp0;
+
+    node->weight -= r->weight + 1;
+    r->weight += node->weight + 1;
+
+    *pp1 = *pp0 = r;
+    node->right = r->left;
+    r->left = node;
+
+    if (node->right) {
+        node->right->parent = node;
+        node->weight += node->right->weight + 1;
+    }
+
+    r->parent = p;
+    node->parent = r;
+}
+
+void
+binary_tree_rb_rotate_right(struct binary_tree *node)
+{
+    struct binary_tree *p = node->parent, **pp0, **pp1, *l = node->left;
+
+    pp0 = (p->left == node)?&p->left:&p->right;
+    if (binary_tree_root_node(p))
+        pp1 = &p->right;
+    else
+        pp1 = pp0;
+
+    node->weight -= l->weight + 1;
+    l->weight += node->weight + 1;
+
+    *pp1 = *pp0 = l;
+    node->left = l->right;
+    l->right = node;
+
+    if (node->left) {
+        node->left->parent = node;
+        node->weight += node->left->weight + 1;
+    }
+
+    l->parent = p;
+    node->parent = l;
+}
+
+void
+binary_tree_rb_rebalance_on_insert(struct binary_tree *node)
+{
+    struct binary_tree *p = node->parent, *gp, *unkle;
+
+    while (p->color == BINARY_TREE_RB_RED) {
+        gp = p->parent;
+        if (gp->left == p)
+            unkle = gp->right;
+        else
+            unkle = gp->left;
+
+        if (BINARY_TREE_RB_NODE_COLOR(unkle) == BINARY_TREE_RB_RED) {
+            unkle->color = p->color = BINARY_TREE_RB_BLACK;
+
+            if (binary_tree_top(gp->parent))
+                break;
+
+            gp->color = BINARY_TREE_RB_RED;
+
+            node = gp;
+            p = node->parent;
+        } else {
+            if (node == p->right && p == gp->left) {
+                binary_tree_rb_rotate_left(p);
+                node = p;
+                p = node->parent;
+            } else if (node == p->left && p == gp->right) {
+                binary_tree_rb_rotate_right(p);
+                node = p;
+                p = node->parent;
+            }
+
+            p->color = BINARY_TREE_RB_BLACK;
+            gp->color = BINARY_TREE_RB_RED;
+
+            if (gp->left == p)
+                binary_tree_rb_rotate_right(gp);
+            else
+                binary_tree_rb_rotate_left(gp);
+
+            break;
+        }
+    }
+}
+
+void
+binary_tree_rb_rebalance_on_delete(struct binary_tree *node)
+{
+    while (!binary_tree_top(node) && node->color == BINARY_TREE_RB_BLACK) {
+        struct binary_tree *p = node->parent;
+        struct binary_tree *brother = (p->left == node?p->right:p->left);
+
+        if (brother == BINARY_TREE_EMPTY_BRANCH)
+            break;
+
+        if (brother->color == BINARY_TREE_RB_RED) {
+            brother->color = BINARY_TREE_RB_BLACK;
+            p->color = BINARY_TREE_RB_RED;
+
+            if (p->left == node) {
+                binary_tree_rb_rotate_left(p);
+            } else {
+                binary_tree_rb_rotate_right(p);
+            }
+        } else {
+            if (BINARY_TREE_RB_NODE_COLOR(brother->left) == BINARY_TREE_RB_BLACK &&
+                    BINARY_TREE_RB_NODE_COLOR(brother->right) == BINARY_TREE_RB_BLACK) {
+                brother->color = BINARY_TREE_RB_BLACK;
+                node = p;
+            } else if (BINARY_TREE_RB_NODE_COLOR(p->left == node?brother->left:brother->right) == BINARY_TREE_RB_BLACK) {
+                brother->color = BINARY_TREE_RB_RED;
+
+                if (p->left == node) {
+                    binary_tree_rb_rotate_left(brother);
+                } else {
+                    binary_tree_rb_rotate_right(brother);
+                }
+            } else {
+                brother->color = p->color;
+                p->color = BINARY_TREE_RB_BLACK;
+
+                if (p->left == node) {
+                    binary_tree_rb_rotate_right(brother);
+                } else {
+                    binary_tree_rb_rotate_left(brother);
+                }
+
+                break;
+            }
+        }
+    }
+}
 #endif
 
 void
@@ -245,7 +393,7 @@ __binary_tree_add(struct binary_tree *root,
     struct binary_tree **n, *r = root;
     int weight = node->weight + 1;
 
-    do {
+    for (;;) {
         res = cmp(r, node);
         r->weight += weight;
 
@@ -253,17 +401,19 @@ __binary_tree_add(struct binary_tree *root,
 
         if (*n == BINARY_TREE_EMPTY_BRANCH) {
             *n = node;
-            (*n)->parent = r;
+            node->parent = r;
 
-#ifdef BINARY_TREE_AVL
-            binary_tree_avl_rebalance_on_insert(*n);
+#if defined(BINARY_TREE_AVL)
+            binary_tree_avl_rebalance_on_insert(node);
+#elif defined(BINARY_TREE_RB)
+            binary_tree_rb_rebalance_on_insert(node);
 #endif
 
             break;
         }
 
         r = *n;
-    } while (1);
+    }
 }
 
 void
@@ -327,7 +477,7 @@ __binary_tree_traverse_infix(struct binary_tree *root,
     if (root == BINARY_TREE_EMPTY_BRANCH)
         return;
 
-    __binary_tree_traverse_infix(root->left, cbk, user_data);
+     __binary_tree_traverse_infix(root->left, cbk, user_data);
     cbk(root, user_data);
     __binary_tree_traverse_infix(root->right, cbk, user_data);
 }
@@ -368,13 +518,16 @@ __binary_tree_detach(struct binary_tree *node)
             p->left = BINARY_TREE_EMPTY_BRANCH;
         else
             p->right = BINARY_TREE_EMPTY_BRANCH;
+
         while (!binary_tree_top(p)) {
             p->weight -= node->weight + 1;
             p = p->parent;
         }
 
-#ifdef BINARY_TREE_AVL
+#if defined(BINARY_TREE_AVL)
         binary_tree_avl_rebalance_on_delete(node->parent);
+#elif defined(BINARY_TREE_RB)
+        binary_tree_rb_rebalance_on_delete(node->parent);
 #endif
     }
 
@@ -384,43 +537,102 @@ __binary_tree_detach(struct binary_tree *node)
 void
 __binary_tree_remove(struct binary_tree *node)
 {
-    struct binary_tree *p = node->parent;
+    struct binary_tree *p, **pp0, **pp1;
 
-    if (binary_tree_root_node(p)) {
-        p->left = p->right = p;
+#if defined(BINARY_TREE_RB)
+  delete_node:
+#endif
+    p = node->parent;
+
+    pp0 = (p->left == node)?&p->left:&p->right;
+    if (binary_tree_root_node(p))
+        pp1 = &p->right;
+    else
+        pp1 = pp0;
+
+    if (binary_tree_leaf_node(node)) {
+        *pp0 = *pp1 = (binary_tree_root_node(p)?p:BINARY_TREE_EMPTY_BRANCH);
+    } else if (node->left != BINARY_TREE_EMPTY_BRANCH &&
+            node->right == BINARY_TREE_EMPTY_BRANCH) {
+        *pp0 = *pp1 = node->left;
+        (*pp0)->parent = p;
+    } else if (node->left == BINARY_TREE_EMPTY_BRANCH &&
+            node->right != BINARY_TREE_EMPTY_BRANCH) {
+        *pp0 = *pp1 = node->right;
+        (*pp0)->parent = p;
     } else {
-        struct binary_tree **pp = (p->left == node)?&p->left:&p->right;
+#if defined(BINARY_TREE_RB)
+        struct binary_tree *n = node->right;
+        void *t;
 
-        if (binary_tree_leaf_node(node)) {
-            *pp = BINARY_TREE_EMPTY_BRANCH;
-        } else if (node->left != BINARY_TREE_EMPTY_BRANCH &&
-                   node->right == BINARY_TREE_EMPTY_BRANCH) {
-            *pp = node->left;
-        } else if (node->left == BINARY_TREE_EMPTY_BRANCH &&
-                   node->right != BINARY_TREE_EMPTY_BRANCH) {
-            *pp = node->right;
+        while (n->left != BINARY_TREE_EMPTY_BRANCH) {
+            n = n->left;
+        }
+
+        *pp0 = *pp1 = n;
+
+        if (n == node->right) {
+            node->left->parent = n;
+            n->parent = node->parent;
+            node->parent = n;
         } else {
-            struct binary_tree **n = &node->right->left;
+            struct binary_tree *pn = n->parent, **ppn;
+            ppn = (pn->left == n)?&pn->left:&pn->right;
 
-            while (*n != BINARY_TREE_EMPTY_BRANCH) {
-                n = &(*n)->left;
-            }
-            *n = node->left;
-            *pp = node->right;
-        }
-        while (!binary_tree_top(p)) {
-            --p->weight;
-            p = p->parent;
+            *ppn = node;
+
+            node->left->parent = node->right->parent = n;
+
+            /* pswap(&n->parent, &node->parent); */
+            t = n->parent, n->parent = node->parent, node->parent = t;
         }
 
-#ifdef BINARY_TREE_AVL
-        binary_tree_avl_rebalance_on_delete(node->parent);
+        /* pswap(&n->right, &node->right); */
+        t = n->right, n->right = node->right, node->right = t;
+
+        n->left = node->left;
+        node->left = BINARY_TREE_EMPTY_BRANCH;
+
+        swap(&n->color, &node->color);
+        swap(&n->weight, &node->weight);
+
+        goto delete_node;
+#else
+        struct binary_tree *n = node->right;
+
+        while (n->left != BINARY_TREE_EMPTY_BRANCH) {
+            n = n->left;
+        }
+
+        n->left = node->left;
+        *pp0 = *pp1 = n;
+        n->parent = node->parent;
+
+        n->weight += node->left->weight + 1;
 #endif
     }
+
+    while (!binary_tree_top(p)) {
+        --p->weight;
+        p = p->parent;
+    }
+
+#if defined(BINARY_TREE_AVL)
+    binary_tree_avl_rebalance_on_delete(node->parent);
+#elif defined(BINARY_TREE_RB)
+    if (node->color == BINARY_TREE_RB_BLACK && *pp0 != BINARY_TREE_EMPTY_BRANCH)
+        binary_tree_rb_rebalance_on_delete(*pp0);
+#endif
 
     node->parent = node;
     node->left = BINARY_TREE_EMPTY_BRANCH;
     node->right = BINARY_TREE_EMPTY_BRANCH;
+    node->weight = 0;
+#if defined(BINARY_TREE_AVL)
+    node->balance = 0;
+#elif defined(BINARY_TREE_RB)
+    node->color = BINARY_TREE_RB_RED;
+#endif
 }
 
 #ifdef BINARY_TREE_MAIN
@@ -461,13 +673,35 @@ __dump_binary_tree_graph(struct binary_tree *root,
     ++info->id;
 
     sprintf(name, "%u", node->num);
+#if defined(BINARY_TREE_RB)
+    if (root->color == BINARY_TREE_RB_RED)
+        dot_dump_shape_colored(info->out, "binary_tree_node", info->id, name, "black", "red", "red", NULL);
+    else
+        dot_dump_shape_colored(info->out, "binary_tree_node", info->id, name, "red", "black", "black", NULL);
+#else
     dot_dump_node(info->out, "binary_tree_node", info->id, name);
+#endif
+
+#if defined(BINARY_TREE_RB)
+    sprintf(name, "binary_tree_empty_node_%u", node->num);
+#endif
+
     if (root->left != BINARY_TREE_EMPTY_BRANCH) {
         dot_dump_link_node_to_node(info->out, "binary_tree_node", info->id, "binary_tree_node", info->id+1);
+    } else {
+#if defined(BINARY_TREE_RB)
+        dot_dump_shape_colored(info->out, name, info->id+1, "", "red", "black", "black", "box");
+        dot_dump_link_node_to_node(info->out, "binary_tree_node", info->id, name, info->id+1);
+#endif
     }
     if (root->right != BINARY_TREE_EMPTY_BRANCH) {
         int weight = root->left!=BINARY_TREE_EMPTY_BRANCH?root->left->weight+1:0;
         dot_dump_link_node_to_node(info->out, "binary_tree_node", info->id, "binary_tree_node", info->id+weight+1);
+    } else {
+#if defined(BINARY_TREE_RB)
+        dot_dump_shape_colored(info->out, name, info->id+2, "", "red", "black", "black", "box");
+        dot_dump_link_node_to_node(info->out, "binary_tree_node", info->id, name, info->id+2);
+#endif
     }
 }
 
@@ -517,32 +751,24 @@ construct_binary_tree(int *array,
     }
 }
 
-/* FIXME: use traverse? */
 void
 destroy_binary_tree(struct binary_tree *root,
                     struct binary_tree_node *pool)
 {
-    struct binary_tree *r, *left, *right;
-    struct binary_tree_node *n;
+    struct binary_tree *r;
+    /* struct binary_tree_node *n; */
 
     if (root == BINARY_TREE_EMPTY_BRANCH) /* sanity checks */
         return;
 
-    if (binary_tree_empty_root(root))
-        return;
+    while (!binary_tree_empty_root(root)) {
+        /* n = container_of(r, struct binary_tree_node, tree); */
+        r = binary_tree_node(root);
+        binary_tree_remove(r);
+    }
 
-    r = binary_tree_node(root);
-    n = container_of(r, struct binary_tree_node, tree);
-
-    left = r->left, right = r->right;
-
-    binary_tree_remove(r);
-
-    destroy_binary_tree(left, NULL);
-    destroy_binary_tree(right, NULL);
-
-    if (pool)
-        free(pool);
+  out:
+    free(pool);
 }
 
 cmp_result_t
@@ -630,6 +856,9 @@ int main(int argc, char **argv)
     if (dump)
         print_array(array, count);
 
+    if (key == -1)
+        key = array[count - 1];
+
     gettimeofday(&tb, NULL);
     construct_binary_tree(array, count, &binary_tree_root, &pool);
     gettimeofday(&ta, NULL);
@@ -639,6 +868,21 @@ int main(int argc, char **argv)
     msecs = usecs/1000;
     usecs %= 1000;
     printf("Construct time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
+
+    sllist_init(&values);
+
+    {
+        unsigned int i;
+        for (i=0;i<count;++i) {
+            search_binary_tree(&binary_tree_root, array[i], &values, 1);
+            if (sllist_empty(&values)) {
+                fprintf(stderr, "Element %u(%u) was not found\n", i, array[i]);
+                /* goto out; */
+            }
+            binary_tree_search_results_free(&values);
+        }
+        printf("All elements of array were successfully found\n");
+    }
 
     sllist_init(&values);
 
