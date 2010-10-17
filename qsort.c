@@ -161,7 +161,7 @@ __quick_sort2_v1(struct sort_data *data)
     unsigned int i, s;
     unsigned int pivot;
 
-    if (l >= r)
+    if (l >= r || count <= 1)
         return;
 
     pivot = array[m];
@@ -248,7 +248,7 @@ void quick_sort2_parallel(unsigned int *array,
     __quick_sort2_v1(&sort_data);
 }
 
-#ifndef QSORT_MOD
+#ifdef QSORT_MAIN
 enum sort_variant {
     sort_variant_qs1,
     sort_variant_qs2
