@@ -4,10 +4,10 @@
 #include "helpers.h"
 #include "sllist.h"
 
-struct binary_tree {
-    struct binary_tree *parent;
-    struct binary_tree *left;
-    struct binary_tree *right;
+struct binary_tree_node {
+    struct binary_tree_node *parent;
+    struct binary_tree_node *left;
+    struct binary_tree_node *right;
     unsigned int weight;
 #if defined(BINARY_TREE_AVL)
     int balance;
@@ -18,19 +18,25 @@ struct binary_tree {
 #endif
 };
 
+struct binary_tree_root {
+    struct binary_tree_node root;
+    struct binary_tree_node *leftmost;
+    struct binary_tree_node *rightmost;
+};
+
 #if defined(BINARY_TREE_RB)
 #define BINARY_TREE_RB_NODE_COLOR(node) ((node)!=BINARY_TREE_EMPTY_BRANCH?(node)->color:BINARY_TREE_RB_BLACK)
 #endif
 
-typedef cmp_result_t (*binary_tree_cmp_cbk_t)(struct binary_tree *, struct binary_tree *);
-typedef cmp_result_t (*binary_tree_key_match_cbk_t)(struct binary_tree *, void *);
-typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree *, void *);
+typedef cmp_result_t (*binary_tree_cmp_cbk_t)(struct binary_tree_node *, struct binary_tree_node *);
+typedef cmp_result_t (*binary_tree_key_match_cbk_t)(struct binary_tree_node *, void *);
+typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree_node *, void *);
 
 #define BINARY_TREE_DIRECTION_LEFT(res) ((res) == cmp_result_less)
 #define BINARY_TREE_DIRECTION_RIGHT(res) ((res) == cmp_result_greater || (res) == cmp_result_equal)
-#define BINARY_TREE_EMPTY_BRANCH ((struct binary_tree *)NULL)
+#define BINARY_TREE_EMPTY_BRANCH ((struct binary_tree_node *)NULL)
 
-static inline void binary_tree_init_root(struct binary_tree *root)
+static inline void __binary_tree_init_root(struct binary_tree_node *root)
 {
     root->parent = root;
     root->left = root;
@@ -43,9 +49,15 @@ static inline void binary_tree_init_root(struct binary_tree *root)
 #endif
 }
 
-static inline void binary_tree_init_node(struct binary_tree *node)
+static inline void binary_tree_init_root(struct binary_tree_root *root)
 {
-    node->parent = (node);
+    __binary_tree_init_root(&root->root);
+    root->leftmost = root->rightmost = BINARY_TREE_EMPTY_BRANCH;
+}
+
+static inline void binary_tree_init_node(struct binary_tree_node *node)
+{
+    node->parent = node;
     node->left = BINARY_TREE_EMPTY_BRANCH;
     node->right = BINARY_TREE_EMPTY_BRANCH;
     node->weight = 0;
@@ -62,12 +74,14 @@ static inline void binary_tree_init_node(struct binary_tree *node)
 #define binary_tree_empty_root(root) ((root)->left == (root) && (root)->right == (root))
 #define binary_tree_node(root) (binary_tree_root_node(root)?(root)->left:(root))
 
-void __binary_tree_add(struct binary_tree *root,
-                       struct binary_tree *node,
-                       binary_tree_cmp_cbk_t cmp);
+void __binary_tree_add(struct binary_tree_node *root,
+        struct binary_tree_node *node,
+        binary_tree_cmp_cbk_t cmp);
+void __binary_tree_add2(struct binary_tree_root *root,
+        struct binary_tree_node *node,
+        binary_tree_cmp_cbk_t cmp);
 
-
-static inline void binary_tree_add(struct binary_tree *root, struct binary_tree *node,
+static inline void binary_tree_add(struct binary_tree_node *root, struct binary_tree_node *node,
         binary_tree_cmp_cbk_t cmp)
 {
     if (binary_tree_empty_root(root)) {
@@ -77,34 +91,107 @@ static inline void binary_tree_add(struct binary_tree *root, struct binary_tree 
         node->color = BINARY_TREE_RB_BLACK;
 #endif
     } else {
-        __binary_tree_add(root->left, node, cmp);
+        __binary_tree_add(root, node, cmp);
     }
 }
 
-void __binary_tree_detach(struct binary_tree *node);
+static inline void binary_tree_add2(struct binary_tree_root *root, struct binary_tree_node *node,
+        binary_tree_cmp_cbk_t cmp)
+{
+    struct binary_tree_node *r = &root->root;
 
-static inline void binary_tree_detach(struct binary_tree *node)
+    if (binary_tree_empty_root(r)) {
+        root->leftmost = root->rightmost = r->left = r->right = node;
+        node->parent = r;
+#if defined(BINARY_TREE_RB)
+        node->color = BINARY_TREE_RB_BLACK;
+#endif
+    } else {
+        __binary_tree_add2(root, node, cmp);
+    }
+}
+
+void __binary_tree_detach(struct binary_tree_node *node);
+
+static inline void binary_tree_detach(struct binary_tree_node *node)
 {
     if (!binary_tree_empty_root(node)) {
         __binary_tree_detach(node);
     }
 }
 
-void __binary_tree_remove(struct binary_tree *node);
+/* Keeps right- and left- most fields up o date */
+static inline void binary_tree_detach2(struct binary_tree_root *root,
+        struct binary_tree_node *node)
+{
+    if (!binary_tree_empty_root(node)) {
+        if (node == root->leftmost) {
+            root->leftmost = node->parent;
+        } else if (node == root->rightmost) {
+            root->rightmost = node->parent;
+        } else {
+            struct binary_tree_node *n = node->left;
+            while (n) {
+                if (root->leftmost = n) {
+                    root->leftmost = node->parent;
+                    goto detach;
+                }
 
-static inline binary_tree_remove(struct binary_tree *node)
+                n = node->left;
+            }
+
+            n = node->right;
+            while (n) {
+                if (root->rightmost = n) {
+                    root->rightmost = node->parent;
+                    goto detach;
+                }
+
+                n = node->right;
+            }
+
+          detach:
+            __binary_tree_detach(node);
+        }
+    }
+}
+
+void __binary_tree_remove(struct binary_tree_node *node);
+
+static inline binary_tree_remove(struct binary_tree_node *node)
 {
     if (!binary_tree_empty_root(node)) {
         __binary_tree_remove(node);
     }
 }
 
-struct binary_tree_search_result {
+/* Keeps right- and left- most fields up o date */
+static inline binary_tree_remove2(struct binary_tree_root *root,
+        struct binary_tree_node *node)
+{
+    if (!binary_tree_empty_root(node)) {
+        if (root->leftmost == node) {
+            if (binary_tree_top(node->parent))
+                root->leftmost = node->right;
+            else
+                root->leftmost = node->parent;
+        } else if (root->rightmost == node) {
+            if (binary_tree_top(node->parent))
+                root->rightmost = node->left;
+            else
+                root->rightmost = node->parent;
+        }
+
+        __binary_tree_remove(node);
+    }
+}
+
+struct binary_tree_node_search_result {
     struct sllist list;
-    struct binary_tree *node;
+    struct binary_tree_node *node;
 };
 
-void __binary_tree_search(struct binary_tree *root,
+void __binary_tree_search(struct binary_tree_node *root,
                         void *key,
                         binary_tree_key_match_cbk_t match,
                         struct sllist *results,
@@ -113,7 +200,7 @@ void __binary_tree_search(struct binary_tree *root,
 /**
  * return list of binary_tree_search_result instances
  */
-static inline void binary_tree_search(struct binary_tree *root,
+static inline void binary_tree_search(struct binary_tree_node *root,
         void *key,
         binary_tree_key_match_cbk_t match,
         struct sllist *results,
@@ -132,20 +219,20 @@ typedef enum {
     binary_tree_traverse_type_postfix
 } binary_tree_traverse_type_t;
 
-void __binary_tree_traverse_infix(struct binary_tree *root,
+void __binary_tree_traverse_infix(struct binary_tree_node *root,
                                   binary_tree_traverse_cbk_t cbk,
                                   void *user_data);
 
-void __binary_tree_traverse_prefix(struct binary_tree *root,
+void __binary_tree_traverse_prefix(struct binary_tree_node *root,
                                    binary_tree_traverse_cbk_t cbk,
                                    void *user_data);
 
-void __binary_tree_traverse_postfix(struct binary_tree *root,
+void __binary_tree_traverse_postfix(struct binary_tree_node *root,
                                     binary_tree_traverse_cbk_t cbk,
                                     void *user_data);
 
 static inline void binary_tree_traverse(binary_tree_traverse_type_t type,
-        struct binary_tree *root,
+        struct binary_tree_node *root,
         binary_tree_traverse_cbk_t cbk,
         void *user_data)
 {

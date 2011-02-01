@@ -22,7 +22,7 @@ struct hash_node {
 #if defined(HTABLE_LIST)
     struct sllist list;
 #elif defined(HTABLE_TREE)
-    struct binary_tree tree;
+    struct binary_tree_node tree;
 #endif
     /* typeof(((struct key_value *)0)->key) key[sizeof(((struct key_value *)0)->key)]; */
     unsigned char key[KEY_LEN];
@@ -35,7 +35,7 @@ struct hash_table {
 #if defined(HTABLE_LIST)
     struct sllist *table;
 #elif defined(HTABLE_TREE)
-    struct binary_tree *table;
+    struct binary_tree_node *table;
 #else
     void *table;
     unsigned int node_size;
@@ -45,8 +45,8 @@ struct hash_table {
 
 #if defined(HTABLE_TREE)
 cmp_result_t
-binary_tree_str_key_cmp(struct binary_tree *one,
-                        struct binary_tree *two)
+binary_tree_str_key_cmp(struct binary_tree_node *one,
+                        struct binary_tree_node *two)
 {
     struct hash_node *_one = container_of(one, struct hash_node, tree);
     struct hash_node *_two = container_of(two, struct hash_node, tree);
@@ -68,7 +68,7 @@ print_htable_entries(struct sllist *head)
 }
 #elif defined(HTABLE_TREE)
 void
-__print_htable_binary_tree_entries(struct binary_tree *root,
+__print_htable_binary_tree_entries(struct binary_tree_node *root,
                                    void *__unused__)
 {
     struct hash_node *node = container_of(root, struct hash_node, tree);
@@ -76,7 +76,7 @@ __print_htable_binary_tree_entries(struct binary_tree *root,
 }
 
 void
-print_htable_entries(struct binary_tree *root)
+print_htable_entries(struct binary_tree_node *root)
 {
     binary_tree_traverse(binary_tree_traverse_type_infix,
                          root, __print_htable_binary_tree_entries, NULL);
@@ -88,7 +88,7 @@ print_htable_binary_tree_search_result(struct sllist *head)
     struct sllist *e;
 
     sllist_for_each(head, e) {
-        struct binary_tree_search_result *sr = container_of(e, struct binary_tree_search_result, list);
+        struct binary_tree_node_search_result *sr = container_of(e, struct binary_tree_node_search_result, list);
         struct hash_node *node = container_of(sr->node, struct hash_node, tree);
         printf("    '%s' => '%s'\n", node->data->key, node->data->value);
     }
@@ -109,14 +109,14 @@ print_htable(struct hash_table *hash_table)
 }
 
 #ifdef HTABLE_TREE
-struct binary_tree_dot_info {
+struct binary_tree_node_dot_info {
     FILE *out;
     int id;
 };
 
 void
-__dump_htable_binary_tree_graph(struct binary_tree *root,
-                                struct binary_tree_dot_info *info)
+__dump_htable_binary_tree_graph(struct binary_tree_node *root,
+                                struct binary_tree_node_dot_info *info)
 {
     struct hash_node *node = container_of(root, struct hash_node, tree);
 
@@ -155,7 +155,7 @@ dump_htable_graph(const char *graph,
             dot_dump_link_table_to_sllist_head(out, "htable", i, "list", i);
         }
 #elif defined(HTABLE_TREE)
-        struct binary_tree_dot_info info = {
+        struct binary_tree_node_dot_info info = {
             .out = out,
             .id = shift
         };
@@ -212,8 +212,8 @@ construct_htable(struct key_value *data,
         return -1;
     }
 #elif defined(HTABLE_TREE)
-    if (!(hash_table->table = malloc(hash_size*sizeof(struct binary_tree)))) {
-        fprintf(stderr, "Error error allocating %d bytes: %s", hash_size*sizeof(struct binary_tree), strerror(errno));
+    if (!(hash_table->table = malloc(hash_size*sizeof(struct binary_tree_node)))) {
+        fprintf(stderr, "Error error allocating %d bytes: %s", hash_size*sizeof(struct binary_tree_node), strerror(errno));
         return -1;
     }
 #endif
@@ -226,7 +226,7 @@ construct_htable(struct key_value *data,
 #if defined(HTABLE_LIST)
         sllist_init(&hash_table->table[i]);
 #elif defined(HTABLE_TREE)
-        binary_tree_init_root(&hash_table->table[i]);
+        __binary_tree_init_root(&hash_table->table[i]);
 #endif
     }
 
@@ -269,9 +269,9 @@ destroy_htable_entries(struct sllist *head)
 #elif defined(HTABLE_TREE)
 /* FIXME: use traverse? */
 void
-destroy_htable_entries(struct binary_tree *root)
+destroy_htable_entries(struct binary_tree_node *root)
 {
-    struct binary_tree *r, *left, *right;
+    struct binary_tree_node *r, *left, *right;
     struct hash_node *n;
 
     if (root == BINARY_TREE_EMPTY_BRANCH) /* sanity checks */
@@ -306,7 +306,7 @@ destroy_htable(struct hash_table *hash_table,
 
 #if defined(HTABLE_TREE)
 cmp_result_t
-binary_tree_str_key_match(struct binary_tree *node,
+binary_tree_str_key_match(struct binary_tree_node *node,
                           void *key)
 {
     struct hash_node *_node = container_of(node, struct hash_node, tree);

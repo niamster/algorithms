@@ -46,7 +46,7 @@ print_array(unsigned int *array,
             int count)
 {
     int i;
-    printf("array of %d elements\n", count);
+    printf("Array of %d elements\n", count);
 
     for (i=0;i<count;++i) {
         if (i!=0 && !(i%16))

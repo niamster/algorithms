@@ -6,10 +6,10 @@
 #include "binary_tree.h"
 
 #if defined(BINARY_TREE_AVL)
-struct binary_tree *
-binary_tree_avl_big_right_turn(struct binary_tree *node,
-                               struct binary_tree *pivot,
-                               struct binary_tree *bottom)
+static struct binary_tree_node *
+binary_tree_avl_big_right_turn(struct binary_tree_node *node,
+                               struct binary_tree_node *pivot,
+                               struct binary_tree_node *bottom)
 {
     if (binary_tree_root_node(node->parent))
         node->parent->left = node->parent->right = bottom;
@@ -53,9 +53,9 @@ binary_tree_avl_big_right_turn(struct binary_tree *node,
     return bottom;
 }
 
-struct binary_tree *
-binary_tree_avl_small_right_turn(struct binary_tree *node,
-                                 struct binary_tree *pivot)
+static struct binary_tree_node *
+binary_tree_avl_small_right_turn(struct binary_tree_node *node,
+                                 struct binary_tree_node *pivot)
 {
     if (binary_tree_root_node(node->parent))
         node->parent->left = node->parent->right = pivot;
@@ -88,10 +88,10 @@ binary_tree_avl_small_right_turn(struct binary_tree *node,
     return pivot;
 }
 
-struct binary_tree *
-binary_tree_avl_big_left_turn(struct binary_tree *node,
-                              struct binary_tree *pivot,
-                              struct binary_tree *bottom)
+static struct binary_tree_node *
+binary_tree_avl_big_left_turn(struct binary_tree_node *node,
+                              struct binary_tree_node *pivot,
+                              struct binary_tree_node *bottom)
 {
     if (binary_tree_root_node(node->parent))
         node->parent->left = node->parent->right = bottom;
@@ -135,9 +135,9 @@ binary_tree_avl_big_left_turn(struct binary_tree *node,
     return bottom;
 }
 
-struct binary_tree *
-binary_tree_avl_small_left_turn(struct binary_tree *node,
-                                struct binary_tree *pivot)
+static struct binary_tree_node *
+binary_tree_avl_small_left_turn(struct binary_tree_node *node,
+                                struct binary_tree_node *pivot)
 {
     if (binary_tree_root_node(node->parent))
         node->parent->left = node->parent->right = pivot;
@@ -171,10 +171,10 @@ binary_tree_avl_small_left_turn(struct binary_tree *node,
     return pivot;
 }
 
-void
-binary_tree_avl_rebalance_on_insert(struct binary_tree *node)
+static void
+binary_tree_avl_rebalance_on_insert(struct binary_tree_node *node)
 {
-    struct binary_tree *p = node->parent, *n = node;
+    struct binary_tree_node *p = node->parent, *n = node;
 
     while (!binary_tree_top(p)) {
         if (p->left == n)
@@ -203,10 +203,10 @@ binary_tree_avl_rebalance_on_insert(struct binary_tree *node)
     }
 }
 
-void
-binary_tree_avl_rebalance_on_delete(struct binary_tree *node)
+static void
+binary_tree_avl_rebalance_on_delete(struct binary_tree_node *node)
 {
-    struct binary_tree *p = node->parent, *n = node;
+    struct binary_tree_node *p = node->parent, *n = node;
 
     while (!binary_tree_top(p)) {
         if (p->left == n)
@@ -235,10 +235,10 @@ binary_tree_avl_rebalance_on_delete(struct binary_tree *node)
     }
 }
 #elif defined(BINARY_TREE_RB)
-void
-binary_tree_rb_rotate_left(struct binary_tree *node)
+static void
+binary_tree_rb_rotate_left(struct binary_tree_node *node)
 {
-    struct binary_tree *p = node->parent, **pp0, **pp1, *r = node->right;
+    struct binary_tree_node *p = node->parent, **pp0, **pp1, *r = node->right;
 
     pp0 = (p->left == node)?&p->left:&p->right;
     if (binary_tree_root_node(p))
@@ -262,10 +262,10 @@ binary_tree_rb_rotate_left(struct binary_tree *node)
     node->parent = r;
 }
 
-void
-binary_tree_rb_rotate_right(struct binary_tree *node)
+static void
+binary_tree_rb_rotate_right(struct binary_tree_node *node)
 {
-    struct binary_tree *p = node->parent, **pp0, **pp1, *l = node->left;
+    struct binary_tree_node *p = node->parent, **pp0, **pp1, *l = node->left;
 
     pp0 = (p->left == node)?&p->left:&p->right;
     if (binary_tree_root_node(p))
@@ -289,10 +289,10 @@ binary_tree_rb_rotate_right(struct binary_tree *node)
     node->parent = l;
 }
 
-void
-binary_tree_rb_rebalance_on_insert(struct binary_tree *node)
+static void
+binary_tree_rb_rebalance_on_insert(struct binary_tree_node *node)
 {
-    struct binary_tree *p = node->parent, *gp, *unkle;
+    struct binary_tree_node *p = node->parent, *gp, *unkle;
 
     while (p->color == BINARY_TREE_RB_RED) {
         gp = p->parent;
@@ -335,12 +335,12 @@ binary_tree_rb_rebalance_on_insert(struct binary_tree *node)
     }
 }
 
-void
-binary_tree_rb_rebalance_on_delete(struct binary_tree *node)
+static void
+binary_tree_rb_rebalance_on_delete(struct binary_tree_node *node)
 {
     while (!binary_tree_top(node) && node->color == BINARY_TREE_RB_BLACK) {
-        struct binary_tree *p = node->parent;
-        struct binary_tree *brother = (p->left == node?p->right:p->left);
+        struct binary_tree_node *p = node->parent;
+        struct binary_tree_node *brother = (p->left == node?p->right:p->left);
 
         if (brother == BINARY_TREE_EMPTY_BRANCH)
             break;
@@ -384,13 +384,13 @@ binary_tree_rb_rebalance_on_delete(struct binary_tree *node)
 }
 #endif
 
-void
-__binary_tree_add(struct binary_tree *root,
-                  struct binary_tree *node,
-                  binary_tree_cmp_cbk_t cmp)
+inline void
+____binary_tree_add(struct binary_tree_node *root,
+        struct binary_tree_node *node,
+        binary_tree_cmp_cbk_t cmp)
 {
     cmp_result_t res;
-    struct binary_tree **n, *r = root;
+    struct binary_tree_node **n, *r = root;
     int weight = node->weight + 1;
 
     for (;;) {
@@ -403,11 +403,6 @@ __binary_tree_add(struct binary_tree *root,
             *n = node;
             node->parent = r;
 
-#if defined(BINARY_TREE_AVL)
-            binary_tree_avl_rebalance_on_insert(node);
-#elif defined(BINARY_TREE_RB)
-            binary_tree_rb_rebalance_on_insert(node);
-#endif
 
             break;
         }
@@ -417,23 +412,62 @@ __binary_tree_add(struct binary_tree *root,
 }
 
 void
-__binary_tree_search(struct binary_tree *root,
+__binary_tree_add(struct binary_tree_node *root,
+        struct binary_tree_node *node,
+        binary_tree_cmp_cbk_t cmp)
+{
+    ____binary_tree_add(root, node, cmp);
+
+#if defined(BINARY_TREE_AVL)
+    binary_tree_avl_rebalance_on_insert(node);
+#elif defined(BINARY_TREE_RB)
+    binary_tree_rb_rebalance_on_insert(node);
+#endif
+}
+
+void
+__binary_tree_add2(struct binary_tree_root *root,
+        struct binary_tree_node *node,
+        binary_tree_cmp_cbk_t cmp)
+{
+    struct binary_tree_node *p;
+
+    ____binary_tree_add(&root->root, node, cmp);
+
+    p = node->parent;
+    if (p->left == node) {
+        if (p == root->leftmost)
+            root->leftmost = node;
+    } else {
+        if (p == root->rightmost)
+            root->rightmost = node;
+    }
+
+#if defined(BINARY_TREE_AVL)
+    binary_tree_avl_rebalance_on_insert(node);
+#elif defined(BINARY_TREE_RB)
+    binary_tree_rb_rebalance_on_insert(node);
+#endif
+}
+
+void
+__binary_tree_search(struct binary_tree_node *root,
                      void *key,
                      binary_tree_key_match_cbk_t match,
                      struct sllist *results,
                      int limit)
 {
     cmp_result_t res;
-    struct binary_tree *n = root;
-    struct binary_tree_search_result *result;
+    struct binary_tree_node *n = root;
+    struct binary_tree_node_search_result *result;
     int matched = 0;
 
     do {
         res = match(n, key);
 
         if (res == cmp_result_equal) {
-            if (!(result = malloc(sizeof(struct binary_tree_search_result)))) {
-                fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct binary_tree_search_result), strerror(errno));
+            if (!(result = malloc(sizeof(struct binary_tree_node_search_result)))) {
+                fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct binary_tree_node_search_result), strerror(errno));
                 break;
             }
 
@@ -457,7 +491,7 @@ __binary_tree_search(struct binary_tree *root,
 }
 
 void
-__binary_tree_traverse_prefix(struct binary_tree *root,
+__binary_tree_traverse_prefix(struct binary_tree_node *root,
                               binary_tree_traverse_cbk_t cbk,
                               void *user_data)
 {
@@ -470,7 +504,7 @@ __binary_tree_traverse_prefix(struct binary_tree *root,
 }
 
 void
-__binary_tree_traverse_infix(struct binary_tree *root,
+__binary_tree_traverse_infix(struct binary_tree_node *root,
                              binary_tree_traverse_cbk_t cbk,
                              void *user_data)
 {
@@ -483,7 +517,7 @@ __binary_tree_traverse_infix(struct binary_tree *root,
 }
 
 void
-__binary_tree_traverse_postfix(struct binary_tree *root,
+__binary_tree_traverse_postfix(struct binary_tree_node *root,
                                binary_tree_traverse_cbk_t cbk,
                                void *user_data)
 {
@@ -500,16 +534,16 @@ binary_tree_search_results_free(struct sllist *results)
 {
     struct sllist *e, *p, *t;
     sllist_for_each_safe_prev(results, e, p, t) {
-        struct binary_tree_search_result *node = container_of(e, struct binary_tree_search_result, list);
+        struct binary_tree_node_search_result *node = container_of(e, struct binary_tree_node_search_result, list);
         sllist_detach(e, p);
         free(node);
     }
 }
 
 void
-__binary_tree_detach(struct binary_tree *node)
+__binary_tree_detach(struct binary_tree_node *node)
 {
-    struct binary_tree *p = node->parent;
+    struct binary_tree_node *p = node->parent;
 
     if (binary_tree_root_node(p)) {
         p->left = p->right = p;
@@ -535,9 +569,9 @@ __binary_tree_detach(struct binary_tree *node)
 }
 
 void
-__binary_tree_remove(struct binary_tree *node)
+__binary_tree_remove(struct binary_tree_node *node)
 {
-    struct binary_tree *p, **pp0, **pp1;
+    struct binary_tree_node *p, **pp0, **pp1;
 
 #if defined(BINARY_TREE_RB)
   delete_node:
@@ -562,7 +596,7 @@ __binary_tree_remove(struct binary_tree *node)
         (*pp0)->parent = p;
     } else {
 #if defined(BINARY_TREE_RB)
-        struct binary_tree *n = node->right;
+        struct binary_tree_node *n = node->right;
         void *t;
 
         while (n->left != BINARY_TREE_EMPTY_BRANCH) {
@@ -576,7 +610,7 @@ __binary_tree_remove(struct binary_tree *node)
             n->parent = node->parent;
             node->parent = n;
         } else {
-            struct binary_tree *pn = n->parent, **ppn;
+            struct binary_tree_node *pn = n->parent, **ppn;
             ppn = (pn->left == n)?&pn->left:&pn->right;
 
             *ppn = node;
@@ -598,15 +632,19 @@ __binary_tree_remove(struct binary_tree *node)
 
         goto delete_node;
 #else
-        struct binary_tree *n = node->right;
+        struct binary_tree_node *n = node->right;
+        void *t;
 
         while (n->left != BINARY_TREE_EMPTY_BRANCH) {
             n = n->left;
         }
 
+        *pp0 = *pp1 = node->right;
+        (*pp0)->parent = p;
+
+        node->left->parent = n;
+        n->parent = p;
         n->left = node->left;
-        *pp0 = *pp1 = n;
-        n->parent = node->parent;
 
         n->weight += node->left->weight + 1;
 #endif
@@ -618,21 +656,13 @@ __binary_tree_remove(struct binary_tree *node)
     }
 
 #if defined(BINARY_TREE_AVL)
-    binary_tree_avl_rebalance_on_delete(node->parent);
+    binary_tree_avl_rebalance_on_delete(p);
 #elif defined(BINARY_TREE_RB)
     if (node->color == BINARY_TREE_RB_BLACK && *pp0 != BINARY_TREE_EMPTY_BRANCH)
         binary_tree_rb_rebalance_on_delete(*pp0);
 #endif
 
-    node->parent = node;
-    node->left = BINARY_TREE_EMPTY_BRANCH;
-    node->right = BINARY_TREE_EMPTY_BRANCH;
-    node->weight = 0;
-#if defined(BINARY_TREE_AVL)
-    node->balance = 0;
-#elif defined(BINARY_TREE_RB)
-    node->color = BINARY_TREE_RB_RED;
-#endif
+    binary_tree_init_node(node);
 }
 
 #ifdef BINARY_TREE_MAIN
@@ -643,32 +673,32 @@ __binary_tree_remove(struct binary_tree *node)
 #include "dot.h"
 #include "sllist.h"
 
-struct binary_tree_node {
+struct bt_node {
     int num;
-    struct binary_tree tree;
+    struct binary_tree_node tree;
 };
 
 cmp_result_t
-binary_tree_integer_cmp(struct binary_tree *one,
-                        struct binary_tree *two)
+binary_tree_integer_cmp(struct binary_tree_node *one,
+                        struct binary_tree_node *two)
 {
-    struct binary_tree_node *_one = container_of(one, struct binary_tree_node, tree);
-    struct binary_tree_node *_two = container_of(two, struct binary_tree_node, tree);
+    struct bt_node *_one = container_of(one, struct bt_node, tree);
+    struct bt_node *_two = container_of(two, struct bt_node, tree);
 
     return (cmp_result_t)int_sign(_two->num - _one->num);
 }
 
-struct binary_tree_dot_info {
+struct binary_tree_node_dot_info {
     FILE *out;
     int id;
 };
 
 void
-__dump_binary_tree_graph(struct binary_tree *root,
-                         struct binary_tree_dot_info *info)
+__dump_binary_tree_graph(struct binary_tree_node *root,
+                         struct binary_tree_node_dot_info *info)
 {
     char name[100];
-    struct binary_tree_node *node = container_of(root, struct binary_tree_node, tree);
+    struct bt_node *node = container_of(root, struct bt_node, tree);
 
     ++info->id;
 
@@ -707,9 +737,9 @@ __dump_binary_tree_graph(struct binary_tree *root,
 
 void
 dump_binary_tree_graph(const char *graph,
-                       struct binary_tree *root)
+                       struct binary_tree_node *root)
 {
-    struct binary_tree_dot_info info = {
+    struct binary_tree_node_dot_info info = {
         .out = fopen(graph, "w+"),
         .id = 0,
     };
@@ -725,19 +755,26 @@ dump_binary_tree_graph(const char *graph,
     fclose(info.out);
 }
 
+void
+dump_binary_tree_node(struct binary_tree_node *node, void *data)
+{
+    struct bt_node *n = container_of(node, struct bt_node, tree);
+    printf("%d ", n->num);
+}
+
 int
 construct_binary_tree(int *array,
                       int count,
-                      struct binary_tree *root,
-                      struct binary_tree_node **pool)
+                      struct binary_tree_root *root,
+                      struct bt_node **pool)
 {
-    struct binary_tree_node *nodes;
+    struct bt_node *nodes;
     int i;
 
     binary_tree_init_root(root);
 
-    if (!(*pool = malloc(count*sizeof(struct binary_tree_node)))) {
-        fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct binary_tree_node), strerror(errno));
+    if (!(*pool = malloc(count*sizeof(struct bt_node)))) {
+        fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct bt_node), strerror(errno));
         return -1;
     }
 
@@ -747,42 +784,56 @@ construct_binary_tree(int *array,
         binary_tree_init_node(&nodes[i].tree);
 
         nodes[i].num = array[i];
-        binary_tree_add(root, &nodes[i].tree, binary_tree_integer_cmp);
+        binary_tree_add2(root, &nodes[i].tree, binary_tree_integer_cmp);
     }
 }
 
-void
-destroy_binary_tree(struct binary_tree *root,
-                    struct binary_tree_node *pool)
+unsigned int
+destroy_binary_tree(struct binary_tree_root *root,
+                    struct bt_node *pool)
 {
-    struct binary_tree *r;
-    /* struct binary_tree_node *n; */
+    struct binary_tree_node *r;
+    unsigned int removed = 0;
+    /* struct bt_node *n; */
 
-    if (root == BINARY_TREE_EMPTY_BRANCH) /* sanity checks */
-        return;
+    while (!binary_tree_empty_root(&root->root)) {
+        r = binary_tree_node(&root->root);
 
-    while (!binary_tree_empty_root(root)) {
-        /* n = container_of(r, struct binary_tree_node, tree); */
-        r = binary_tree_node(root);
-        binary_tree_remove(r);
+        /* n = container_of(r, struct bt_node, tree); */
+        /* printf("Removing: %d\n", n->num); */
+
+        binary_tree_remove2(root, r);
+
+        ++removed;
+
+        /* { */
+        /*     struct bt_node *lm = container_of(root->leftmost, struct bt_node, tree); */
+        /*     struct bt_node *rm = container_of(root->rightmost, struct bt_node, tree); */
+
+        /*     printf("Leftmost: %d, Rightmost: %d\n", */
+        /*             (root->leftmost==BINARY_TREE_EMPTY_BRANCH)?-1:lm->num, */
+        /*             (root->leftmost==BINARY_TREE_EMPTY_BRANCH)?-1:rm->num); */
+        /* } */
     }
 
   out:
     free(pool);
+
+    return removed;
 }
 
 cmp_result_t
-binary_tree_integer_match(struct binary_tree *node,
+binary_tree_integer_match(struct binary_tree_node *node,
                           void *key)
 {
     int _key = *(int *)key;
-    struct binary_tree_node *_node = container_of(node, struct binary_tree_node, tree);
+    struct bt_node *_node = container_of(node, struct bt_node, tree);
 
     return (cmp_result_t)int_sign(_key - _node->num);
 }
 
 void
-search_binary_tree(struct binary_tree *root,
+search_binary_tree(struct binary_tree_node *root,
                    int key,
                    struct sllist *result,
                    int limit)
@@ -811,9 +862,11 @@ int main(int argc, char **argv)
     int limit = -1;
     int key = -1;
 
+    unsigned int removed;
+
     unsigned int *array;
-    struct binary_tree binary_tree_root;
-    struct binary_tree_node *pool;
+    struct binary_tree_root binary_tree_root;
+    struct bt_node *pool;
 
     int opt;
     const struct option options[] = {
@@ -869,12 +922,30 @@ int main(int argc, char **argv)
     usecs %= 1000;
     printf("Construct time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
 
+    {
+        struct bt_node *lm = container_of(binary_tree_root.leftmost, struct bt_node, tree);
+        struct bt_node *rm = container_of(binary_tree_root.rightmost, struct bt_node, tree);
+        printf("Leftmost: %d, Rightmost: %d\n", lm->num, rm->num);
+    }
+
+    if (dump) {
+        struct bt_node *n = container_of(binary_tree_node(&binary_tree_root.root),
+                struct bt_node, tree);
+        printf("Root: %d \n", n->num);
+        printf("Infix walk:\n");
+        binary_tree_traverse(binary_tree_traverse_type_infix,
+                &binary_tree_root.root, dump_binary_tree_node, NULL);
+        printf("\n");
+    }
+
+
+
     sllist_init(&values);
 
     {
         unsigned int i;
         for (i=0;i<count;++i) {
-            search_binary_tree(&binary_tree_root, array[i], &values, 1);
+            search_binary_tree(&binary_tree_root.root, array[i], &values, 1);
             if (sllist_empty(&values)) {
                 fprintf(stderr, "Element %u(%u) was not found\n", i, array[i]);
                 /* goto out; */
@@ -887,7 +958,7 @@ int main(int argc, char **argv)
     sllist_init(&values);
 
     gettimeofday(&tb, NULL);
-    search_binary_tree(&binary_tree_root, key, &values, limit);
+    search_binary_tree(&binary_tree_root.root, key, &values, limit);
     gettimeofday(&ta, NULL);
 
     if (!sllist_empty(&values)) {
@@ -910,14 +981,15 @@ int main(int argc, char **argv)
     printf("Search time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
 
     if (graph) {
-        dump_binary_tree_graph(graph, &binary_tree_root);
+        dump_binary_tree_graph(graph, &binary_tree_root.root);
     }
 
   out:
     free(array);
 
     gettimeofday(&tb, NULL);
-    destroy_binary_tree(&binary_tree_root, pool);
+    removed = destroy_binary_tree(&binary_tree_root, pool);
+    printf("Removed: %u\n", removed);
     gettimeofday(&ta, NULL);
     usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
     secs = usecs/1000000;
