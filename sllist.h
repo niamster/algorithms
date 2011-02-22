@@ -32,9 +32,9 @@ struct sllist {
          (e)!=(head);                                            \
          (p)=((t)==(head)->next?(head):(e)), (e)=(t), (t)=(t)->next)
 
-#define sllist_detach(e, prev)                                          \
+#define sllist_detach(e, p)                                             \
     do {                                                                \
-        (prev)->next = (e)->next;                                       \
+        (p)->next = (e)->next;                                          \
         /* safe detach */                                               \
         (e)->next = (e);                                                \
     } while (0)

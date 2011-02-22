@@ -14,16 +14,19 @@ struct sort_data;
 typedef void (*quick_sort_fn)(struct sort_data *);
 
 struct sort_data {
+    /* Sort callbacks */
     quick_sort_fn quick_sort;
     quick_sort_fn quick_sort_thread;
+
+    /* Array to sort */
     unsigned int *array;
     unsigned int count;
+
     unsigned int max_threads;
     pthread_t thread;
 };
 
-void *
-__quick_sort_parallel_wrapper(struct sort_data *data)
+void *__quick_sort_parallel_wrapper(struct sort_data *data)
 {
     data->quick_sort(data);
 

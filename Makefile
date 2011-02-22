@@ -1,6 +1,6 @@
 CC		:= gcc
 CFLAGS	:= -O3
-ALGOS	:= qsort binary-search htable-list htable-tree binary-tree binary-tree-avl binary-tree-rb
+ALGOS	:= qsort binary-search htable-list htable-tree binary-tree binary-tree-avl binary-tree-rb wq
 LDFLAGS := -lpthread
 
 RND_CNT := 1000000
@@ -54,6 +54,9 @@ binary-tree-rb: binary_tree.c $(HELPERS)
 
 binary-search: binary_search.c qsort.c $(HELPERS)
 	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
+
+wq: workqueue.c $(HELPERS)
+	$(Q)$(CC) -DWORKQUEUE_MAIN $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
 .PHONY: rnd.u32 rnd.32b
 rnd-u32:
@@ -113,6 +116,11 @@ test-binary-search: binary-search
 
 	$(Q)echo "binary-search"
 	$(Q)./binary-search -i $@.$(TST_RND_CNT).rnd --dump $(RFLAGS)
+
+test-wq: wq
+	$(Q)echo "wq"
+
+	$(Q)./wq -t 5 -w 100 $(RFLAGS)
 
 clean:
 	$(Q)rm -rf $(ALGOS)
