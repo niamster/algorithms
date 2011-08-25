@@ -6,11 +6,12 @@
 
 #include "sllist.h"
 #include "helpers.h"
+#include "notification.h"
 #include "workqueue.h"
 
 struct workqueue_desc {
     pthread_mutex_t mutex;
-    pthread_cond_t cond;
+    struct notification notification;
     unsigned int num;
     unsigned int stopping:1;
     pthread_t threads[0];
@@ -24,15 +25,17 @@ worker(struct workqueue *wq)
 
     for (;;) {
         pthread_mutex_lock(&wq->desc->mutex);
+
         if (wq->desc->stopping) {
             pthread_mutex_unlock(&wq->desc->mutex);
             return NULL;
         }
 
-        if (pthread_cond_wait(&wq->desc->cond, &wq->desc->mutex) != 0) {
-            printf("Failed to wait for event\n");
-            return NULL;
-        }
+        pthread_mutex_unlock(&wq->desc->mutex);
+
+        wait_for_notification(&wq->desc->notification);
+
+        pthread_mutex_lock(&wq->desc->mutex);
 
         if (wq->desc->stopping) {
             pthread_mutex_unlock(&wq->desc->mutex);
@@ -65,13 +68,13 @@ worker(struct workqueue *wq)
 static void
 wake_up_all_workers(struct workqueue *wq)
 {
-    pthread_cond_broadcast(&wq->desc->cond);
+    notify_all(&wq->desc->notification);
 }
 
 static void
 wake_up_one_worker(struct workqueue *wq)
 {
-    pthread_cond_signal(&wq->desc->cond);
+    notify(&wq->desc->notification);
 }
 
 int
@@ -83,14 +86,14 @@ init_workqueue(struct workqueue *wq, unsigned int threads)
         return -1;
     }
 
-    if (pthread_mutex_init(&wq->desc->mutex, NULL) != 0) {
-        printf("Unable to init wq lock\n");
+    if (init_notification(&wq->desc->notification) != 0) {
+        printf("Unable to init notification\n");
         free(wq->desc);
         return -1;
     }
 
-    if (pthread_cond_init(&wq->desc->cond, NULL) != 0) {
-        printf("Unable to init wq notificator\n");
+    if (pthread_mutex_init(&wq->desc->mutex, NULL) != 0) {
+        printf("Unable to init wq lock\n");
         free(wq->desc);
         return -1;
     }
@@ -161,7 +164,7 @@ destroy_workqueue(struct workqueue *wq)
     }
 
     pthread_mutex_destroy(&wq->desc->mutex);
-    pthread_cond_destroy(&wq->desc->cond);
+    destroy_notification(&wq->desc->notification);
     free(wq->desc);
 }
 

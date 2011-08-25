@@ -55,7 +55,7 @@ binary-tree-rb: binary_tree.c $(HELPERS)
 binary-search: binary_search.c qsort.c $(HELPERS)
 	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
-wq: workqueue.c $(HELPERS)
+wq: workqueue.c notification.c $(HELPERS)
 	$(Q)$(CC) -DWORKQUEUE_MAIN $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
 .PHONY: rnd.u32 rnd.32b
