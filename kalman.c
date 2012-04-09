@@ -53,6 +53,7 @@ usage(const char *prog)
 
 int main(int argc, char **argv)
 {
+    int ret = 1;
     const char *input_data = "/dev/random", *output_data = NULL;
     int count = 0;
 
@@ -155,10 +156,13 @@ int main(int argc, char **argv)
         close(d);
     }
 
+    ret = 0;
   out:
-    free(array_in);
-    free(array_out);
+    if (array_in)
+        free(array_in);
+    if (array_out)
+        free(array_out);
 
-    return 0;
+    return ret;
 }
 #endif
