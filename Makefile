@@ -169,6 +169,22 @@ test-moving-average: moving-average
 						 '$@.$(TST_RND_CNT).1.out' using 1:3 smooth csplines with linespoints title 'Moving-Average-5', \
 						 '$@.$(TST_RND_CNT).2.out' using 1:3 smooth csplines with linespoints title 'Moving-Average-20'"
 
+test-filters: moving-average kalman
+	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
+
+	$(Q)echo "filters"
+	$(Q)./moving-average -P5 -i $@.$(TST_RND_CNT).rnd -o $@.$(TST_RND_CNT).0.out $(RFLAGS)
+	$(Q)./kalman -F1 -H1 -B0 -Q15 -R15 -i $@.$(TST_RND_CNT).rnd -o $@.$(TST_RND_CNT).1.out $(RFLAGS)
+	$(Q)gnuplot -e "set terminal png size $(TST_RND_CNT)*50,1400; \
+					set key left box outside; \
+					set title 'Moving-Average filter'; \
+					set output '$@.$(TST_RND_CNT).png'; \
+					set xtics 10; \
+					set mxtics 10; \
+					plot '$@.$(TST_RND_CNT).0.out' using 1:2 smooth csplines with linespoints lc rgb 'red' lw 2 title 'Unfiltered', \
+						 '$@.$(TST_RND_CNT).0.out' using 1:3 smooth csplines with linespoints title 'Moving-Average-5', \
+						 '$@.$(TST_RND_CNT).1.out' using 1:3 smooth csplines with linespoints title 'Kalman-Q15-R15'"
+
 
 clean:
 	$(Q)rm -rf $(ALGOS)
