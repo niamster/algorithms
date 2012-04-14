@@ -16,7 +16,7 @@ struct alpha_beta_filter_state {
     double pV;
 };
 
-void alpha_beta_filter_init(struct alpha_beta_filter_state *state/* , double covError, double value */)
+void alpha_beta_filter_init(struct alpha_beta_filter_state *state)
 {
 }
 
@@ -38,7 +38,8 @@ int
 usage(const char *prog)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "%s [--input-data|-i <path>] [--count|-c <num>] [--output-data|-o <path>]\n", prog);
+    fprintf(stderr, "%s [--alpha|-a <alpha>] [--beta|-b <beta>] [--delta-t|-t <delta T>]"
+                    " [--input-data|-i <path>] [--count|-c <num>] [--output-data|-o <path>]\n", prog);
     return 1;
 }
 

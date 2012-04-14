@@ -47,7 +47,10 @@ int
 usage(const char *prog)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "%s [--input-data|-i <path>] [--count|-c <num>] [--output-data|-o <path>]\n", prog);
+    fprintf(stderr, "%s [--control-input|-B <control input>] [--state-transition|-F <state transition>]"
+                    " [--observation|-H <observation>] [--process-noise-cov|-Q <process noise covariation>]"
+                    " [--meas-noise-cov|-R <measurement noise covariation>]"
+                    " [--input-data|-i <path>] [--count|-c <num>] [--output-data|-o <path>]\n", prog);
     return 1;
 }
 

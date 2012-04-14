@@ -72,7 +72,7 @@ int
 usage(const char *prog)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "%s [--input-data|-i <path>] [--count|-c <num>] [--output-data|-o <path>]\n", prog);
+    fprintf(stderr, "%s [--order|-P <order>] [--input-data|-i <path>] [--count|-c <num>] [--output-data|-o <path>]\n", prog);
     return 1;
 }
 
