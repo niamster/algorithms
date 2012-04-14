@@ -1,6 +1,9 @@
 CC		:= gcc
 CFLAGS	:= -O3
-ALGOS	:= qsort binary-search htable-list htable-tree binary-tree binary-tree-avl binary-tree-rb wq kalman moving-average
+ALGOS	:= qsort binary-search \
+		htable-list wq \
+		htable-tree binary-tree binary-tree-avl binary-tree-rb \
+		kalman moving-average alpha-beta
 LDFLAGS := -lpthread
 
 RND_CNT := 1000000
@@ -63,6 +66,9 @@ kalman: kalman.c $(HELPERS)
 
 moving-average: moving_average.c $(HELPERS)
 	$(Q)$(CC) -DMOVING_AVERAGE_MAIN $^ $(CFLAGS) -o $@ $(LDFLAGS)
+
+alpha-beta: alpha_beta.c $(HELPERS)
+	$(Q)$(CC) -DALPHA_BETA_MAIN $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
 .PHONY: rnd.u32 rnd.32b
 rnd-u32:
@@ -169,12 +175,36 @@ test-moving-average: moving-average
 						 '$@.$(TST_RND_CNT).1.out' using 1:3 smooth csplines with linespoints title 'Moving-Average-5', \
 						 '$@.$(TST_RND_CNT).2.out' using 1:3 smooth csplines with linespoints title 'Moving-Average-20'"
 
-test-filters: moving-average kalman
+test-alpha-beta: alpha-beta
+	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
+
+	$(Q)echo "alpha-beta"
+	$(Q)./alpha-beta -a0.1 -b0.9 -t0.5 -i $@.$(TST_RND_CNT).rnd -o $@.$(TST_RND_CNT).0.out $(RFLAGS)
+	$(Q)./alpha-beta -a0.9 -b0.1 -t0.5 -i $@.$(TST_RND_CNT).rnd -o $@.$(TST_RND_CNT).1.out $(RFLAGS)
+	$(Q)./alpha-beta -a0.5 -b0.5 -t0.5 -i $@.$(TST_RND_CNT).rnd -o $@.$(TST_RND_CNT).2.out $(RFLAGS)
+	$(Q)./alpha-beta -a0.85 -b0.005 -t0.5 -i $@.$(TST_RND_CNT).rnd -o $@.$(TST_RND_CNT).3.out $(RFLAGS)
+	$(Q)./alpha-beta -a0.5 -b0.1 -t0.5 -i $@.$(TST_RND_CNT).rnd -o $@.$(TST_RND_CNT).4.out $(RFLAGS)
+	$(Q)gnuplot -e "set terminal png size $(TST_RND_CNT)*50,1400; \
+					set key left box outside; \
+					set title 'Alpha-Beta filter'; \
+					set output '$@.$(TST_RND_CNT).png'; \
+					set xtics 10; \
+					set mxtics 10; \
+					plot '$@.$(TST_RND_CNT).0.out' using 1:2 smooth csplines with linespoints lc rgb 'red' lw 2 title 'Unfiltered', \
+						 '$@.$(TST_RND_CNT).0.out' using 1:3 smooth csplines with linespoints title 'Alpha-0.1,Beta-0.9,dT=0.5', \
+						 '$@.$(TST_RND_CNT).1.out' using 1:3 smooth csplines with linespoints title 'Alpha-0.9,Beta-0.1,dT=0.5', \
+						 '$@.$(TST_RND_CNT).2.out' using 1:3 smooth csplines with linespoints title 'Alpha-0.5,Beta-0.5,dT=0.5', \
+						 '$@.$(TST_RND_CNT).3.out' using 1:3 smooth csplines with linespoints title 'Alpha-0.85,Beta-0.005,dT=0.5', \
+						 '$@.$(TST_RND_CNT).4.out' using 1:3 smooth csplines with linespoints title 'Alpha-0.5,Beta-0.1,dT=0.5'"
+
+
+test-filters: moving-average kalman alpha-beta
 	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
 
 	$(Q)echo "filters"
 	$(Q)./moving-average -P5 -i $@.$(TST_RND_CNT).rnd -o $@.$(TST_RND_CNT).0.out $(RFLAGS)
 	$(Q)./kalman -F1 -H1 -B0 -Q15 -R15 -i $@.$(TST_RND_CNT).rnd -o $@.$(TST_RND_CNT).1.out $(RFLAGS)
+	$(Q)./alpha-beta -a0.5 -b0.1 -t0.5 -i $@.$(TST_RND_CNT).rnd -o $@.$(TST_RND_CNT).2.out $(RFLAGS)
 	$(Q)gnuplot -e "set terminal png size $(TST_RND_CNT)*50,1400; \
 					set key left box outside; \
 					set title 'Moving-Average filter'; \
@@ -183,7 +213,8 @@ test-filters: moving-average kalman
 					set mxtics 10; \
 					plot '$@.$(TST_RND_CNT).0.out' using 1:2 smooth csplines with linespoints lc rgb 'red' lw 2 title 'Unfiltered', \
 						 '$@.$(TST_RND_CNT).0.out' using 1:3 smooth csplines with linespoints title 'Moving-Average-5', \
-						 '$@.$(TST_RND_CNT).1.out' using 1:3 smooth csplines with linespoints title 'Kalman-Q15-R15'"
+						 '$@.$(TST_RND_CNT).1.out' using 1:3 smooth csplines with linespoints title 'Kalman-Q15-R15', \
+						 '$@.$(TST_RND_CNT).2.out' using 1:3 smooth csplines with linespoints title 'Alpha-0.5,Beta-0.1,dT=0.5'"
 
 
 clean:
