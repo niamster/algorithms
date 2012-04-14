@@ -28,7 +28,7 @@ int moving_average_filter_init(struct moving_average_filter_state *state)
 
     {
         int i;
-        double b = 1./(double)state->P;
+        double b = 1./((double)state->P + 1);
         for (i=0;i<state->P;++i)
             state->b[i] = b;
     }
