@@ -20,25 +20,25 @@ void dot_dump_end(FILE *out);
 
 void dot_dump_table(FILE *out,
         const char *label,
-        int size);
+        unsigned long size);
 
 void dot_dump_link_table_to_sllist_head(FILE *out,
         const char *src_label,
-        int src_id,
+        unsigned long src_id,
         const char *dst_label,
-        int dst_id);
+        unsigned long dst_id);
 
 void dot_dump_link_table_to_node(FILE *out,
         const char *src_label,
-        int src_id,
+        unsigned long src_id,
         const char *dst_label,
-        int dst_id);
+        unsigned long dst_id);
 
 void dot_dump_link_node_to_node(FILE *out,
         const char *src_label,
-        int src_id,
+        unsigned long src_id,
         const char *dst_label,
-        int dst_id);
+        unsigned long dst_id);
 
 #define dot_dump_node(out, label, id, name)                             \
     dot_dump_shape_colored(out, label, id, name, "black", "black", NULL, NULL)
@@ -48,7 +48,7 @@ void dot_dump_link_node_to_node(FILE *out,
    circle, box, triangle, invtriangle, ellipse, diamond, parallelogram*/
 void dot_dump_shape_colored(FILE *out,
         const char *label,
-        int id,
+        unsigned long id,
         const char *name,
         const char *txt_color,
         const char *edge_color,
@@ -58,7 +58,7 @@ void dot_dump_shape_colored(FILE *out,
 #define dot_dump_sllist(out, label, idx, head, type, member, name)  \
     do {                                                            \
         struct sllist *e;                                           \
-        unsigned int pos = 0;                                       \
+        unsigned long pos = 0;                                      \
         __dot_dump_header(out, label, idx);                         \
         sllist_for_each(head, e) {                                  \
             type *node =                                            \
@@ -75,12 +75,12 @@ void dot_dump_shape_colored(FILE *out,
 
 void __dot_dump_header(FILE *out,
         const char *label,
-        unsigned int idx);
+        unsigned long idx);
 void __dot_dump_footer(FILE *out);
 void __dot_dump_sllist_node(FILE *out,
         const char *label,
-        unsigned int idx,
-        unsigned int id,
+        unsigned long idx,
+        unsigned long id,
         struct sllist *head,
         struct sllist *node,
         const char *name);

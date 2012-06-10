@@ -788,7 +788,7 @@ binary_tree_integer_cmp(struct binary_tree_node *one,
 
 struct binary_tree_node_dot_info {
     FILE *out;
-    int id;
+    unsigned long id;
 };
 
 void
@@ -798,16 +798,14 @@ __dump_binary_tree_graph(struct binary_tree_node *root,
     char name[100];
     struct bt_node *node = container_of(root, struct bt_node, tree);
 
-    ++info->id;
-
     sprintf(name, "%u", node->num);
 #if defined(BINARY_TREE_RB)
     if (root->color == BINARY_TREE_RB_RED)
-        dot_dump_shape_colored(info->out, "binary_tree_node", info->id, name, "black", "red", "red", NULL);
+        dot_dump_shape_colored(info->out, "binary_tree_node", (unsigned long)root, name, "black", "red", "red", NULL);
     else
-        dot_dump_shape_colored(info->out, "binary_tree_node", info->id, name, "red", "black", "black", NULL);
+        dot_dump_shape_colored(info->out, "binary_tree_node", (unsigned long)root, name, "red", "black", "black", NULL);
 #else
-    dot_dump_node(info->out, "binary_tree_node", info->id, name);
+    dot_dump_node(info->out, "binary_tree_node", (unsigned long)root, name);
 #endif
 
 #if defined(BINARY_TREE_RB)
@@ -815,21 +813,26 @@ __dump_binary_tree_graph(struct binary_tree_node *root,
 #endif
 
     if (root->left != BINARY_TREE_EMPTY_BRANCH) {
-        dot_dump_link_node_to_node(info->out, "binary_tree_node", info->id, "binary_tree_node", info->id+1);
+        dot_dump_link_node_to_node(info->out, "binary_tree_node", (unsigned long)root, "binary_tree_node", (unsigned long)root->left);
     } else {
 #if defined(BINARY_TREE_RB)
-        dot_dump_shape_colored(info->out, name, info->id+1, "", "red", "black", "black", "box");
-        dot_dump_link_node_to_node(info->out, "binary_tree_node", info->id, name, info->id+1);
+        dot_dump_shape_colored(info->out, "NULL", info->id, "", "red", "black", "black", "box");
+#else
+        dot_dump_shape_colored(info->out, "NULL", info->id, "", "red", "black", "black", "circle");
 #endif
+        dot_dump_link_node_to_node(info->out, "binary_tree_node", (unsigned long)root, "NULL", (unsigned long)info->id);
+        ++info->id;
     }
     if (root->right != BINARY_TREE_EMPTY_BRANCH) {
-        int weight = root->left!=BINARY_TREE_EMPTY_BRANCH?root->left->weight+1:0;
-        dot_dump_link_node_to_node(info->out, "binary_tree_node", info->id, "binary_tree_node", info->id+weight+1);
+        dot_dump_link_node_to_node(info->out, "binary_tree_node", (unsigned long)root, "binary_tree_node", (unsigned long)root->right);
     } else {
 #if defined(BINARY_TREE_RB)
-        dot_dump_shape_colored(info->out, name, info->id+2, "", "red", "black", "black", "box");
-        dot_dump_link_node_to_node(info->out, "binary_tree_node", info->id, name, info->id+2);
+        dot_dump_shape_colored(info->out, "NULL", info->id, "", "red", "black", "black", "box");
+#else
+        dot_dump_shape_colored(info->out, "NULL", info->id, "", "red", "black", "black", "circle");
 #endif
+        dot_dump_link_node_to_node(info->out, "binary_tree_node", (unsigned long)root, "NULL", (unsigned long)info->id);
+        ++info->id;
     }
 }
 
@@ -1141,7 +1144,7 @@ int main(int argc, char **argv)
             binary_tree_search_results_free(&values);
         }
 
-        printf("Removed %d tree nodes\n");
+        printf("Removed %d tree nodes\n", count/2);
 
         for (i=count/2;i<count;++i) {
             sllist_init(&values);
