@@ -183,12 +183,12 @@ add_work(struct workqueue *wq, struct work *work)
 #ifdef WORKQUEUE_MAIN
 void __worker(void *data)
 {
-    printf("work %u\n", (unsigned int)data);
+    printf("work %z\n", (size_t)data);
 }
 
 void __notification(void *data)
 {
-    printf("finished %u\n", (unsigned int)data);
+    printf("finished %u\n", (size_t)data);
 }
 
 int
@@ -204,7 +204,7 @@ int main(unsigned int argc, char **argv)
     struct timeval tb, ta;
     unsigned long secs, msecs, usecs;
 
-    unsigned int works = 0;
+    unsigned long works = 0;
     unsigned int threads = 0;
 
     struct workqueue wq;

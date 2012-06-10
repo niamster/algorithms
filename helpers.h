@@ -47,7 +47,7 @@ int_sign(int x)
 }
 
 #define container_of(ptr, type, member)                             \
-    (type *)((char *)ptr - (unsigned int)(&((type *)0)->member))
+    (type *)((char *)ptr - (size_t)(&((type *)0)->member))
 
 
 /* fls - find last (most-significant) bit set */
