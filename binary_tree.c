@@ -1036,15 +1036,16 @@ int main(int argc, char **argv)
         printf("\n");
     }
 
-
-
-    sllist_init(&values);
-
     {
+        struct binary_tree_node_search_result *r;
+        struct sllist *e;
+        struct bt_node *n;
         unsigned int i;
 
         usecs = 0;
         for (i=0;i<count;++i) {
+            sllist_init(&values);
+
             gettimeofday(&tb, NULL);
             search_binary_tree(&binary_tree_root.root, array[i], &values, 1);
             gettimeofday(&ta, NULL);
@@ -1055,6 +1056,15 @@ int main(int argc, char **argv)
                 fprintf(stderr, "Element %u(%u) was not found\n", i, array[i]);
                 goto out;
             }
+
+            e = sllist_first(&values);
+            r = container_of(e, struct binary_tree_node_search_result, list);
+            n = container_of(binary_tree_node(r->node), struct bt_node, tree);
+            if (n->num != array[i]) {
+                fprintf(stderr, "Found element %u does not match to the search criteria %u\n", n->num, array[i]);
+                goto out;
+            }
+
             binary_tree_search_results_free(&values);
         }
 
@@ -1066,36 +1076,102 @@ int main(int argc, char **argv)
         printf("All elements of array were successfully found, avg time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
     }
 
-    sllist_init(&values);
+    {
+        sllist_init(&values);
 
-    gettimeofday(&tb, NULL);
-    search_binary_tree(&binary_tree_root.root, key, &values, limit);
-    gettimeofday(&ta, NULL);
+        gettimeofday(&tb, NULL);
+        search_binary_tree(&binary_tree_root.root, key, &values, limit);
+        gettimeofday(&ta, NULL);
 
-    if (!sllist_empty(&values)) {
-        struct sllist *e;
-        int count = 0;
-        sllist_for_each(&values, e) {
-            ++count;
+        if (!sllist_empty(&values)) {
+            struct binary_tree_node_search_result *r;
+            struct sllist *e;
+            struct bt_node *n;
+            int count = 0;
+
+            sllist_for_each(&values, e) {
+                ++count;
+                r = container_of(e, struct binary_tree_node_search_result, list);
+                n = container_of(binary_tree_node(r->node), struct bt_node, tree);
+                if (n->num != key) {
+                    fprintf(stderr, "Found element %u does not match to the search criteria %u\n", n->num, key);
+                    goto out;
+                }
+            }
+            printf("%d node%s for key '%d'\n", count, count==1?"":"s", key);
+            binary_tree_search_results_free(&values);
+        } else {
+            printf("Node was not found for key '%d'\n", key);
         }
-        printf("Entries %d for key '%d'\n", count, key);
-        binary_tree_search_results_free(&values);
-    } else {
-        printf("Value was not found for key '%d'\n", key);
+
+        usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
+        secs = usecs/1000000;
+        usecs %= 1000000;
+        msecs = usecs/1000;
+        usecs %= 1000;
+        printf("Search time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
     }
 
-    usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
-    secs = usecs/1000000;
-    usecs %= 1000000;
-    msecs = usecs/1000;
-    usecs %= 1000;
-    printf("Search time: %lu seconds %lu msecs %lu usecs\n", secs, msecs, usecs);
+    {
+        struct binary_tree_node_search_result *r;
+        struct sllist *e;
+        struct bt_node *n;
+        unsigned int i;
 
+        for (i=0;i<count/2;++i) {
+            sllist_init(&values);
+
+            search_binary_tree(&binary_tree_root.root, array[i], &values, 1);
+
+            if (sllist_empty(&values)) {
+                fprintf(stderr, "Element %u(%u) was not found\n", i, array[i]);
+                goto out;
+            }
+
+            e = sllist_first(&values);
+            r = container_of(e, struct binary_tree_node_search_result, list);
+            n = container_of(binary_tree_node(r->node), struct bt_node, tree);
+            if (n->num != array[i]) {
+                fprintf(stderr, "Found element %u does not match to the search criteria %u\n", n->num, array[i]);
+                goto out;
+            }
+
+            binary_tree_remove2(&binary_tree_root, binary_tree_node(r->node));
+
+            binary_tree_search_results_free(&values);
+        }
+
+        printf("Removed %d tree nodes\n");
+
+        for (i=count/2;i<count;++i) {
+            sllist_init(&values);
+
+            search_binary_tree(&binary_tree_root.root, array[i], &values, 1);
+
+            if (sllist_empty(&values)) {
+                fprintf(stderr, "Element %u(%u) was not found\n", i, array[i]);
+                goto out;
+            }
+
+            e = sllist_first(&values);
+            r = container_of(e, struct binary_tree_node_search_result, list);
+            n = container_of(binary_tree_node(r->node), struct bt_node, tree);
+            if (n->num != array[i]) {
+                fprintf(stderr, "Found element %u does not match to the search criteria %u\n", n->num, array[i]);
+                goto out;
+            }
+
+            binary_tree_search_results_free(&values);
+        }
+
+        printf("Rest elements of array were successfully found\n");
+    }
+
+  out:
     if (graph) {
         dump_binary_tree_graph(graph, &binary_tree_root.root);
     }
 
-  out:
     free(array);
 
     gettimeofday(&tb, NULL);

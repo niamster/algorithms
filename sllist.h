@@ -12,6 +12,8 @@ struct sllist {
 
 #define sllist_empty(head) ((head)->next == (head))
 
+#define sllist_first(head) (head)->next
+
 #define sllist_for_each(head, e)                                 \
     for ((e)=(head)->next;                                       \
          (e)!=(head);                                            \
