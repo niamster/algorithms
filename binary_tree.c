@@ -715,15 +715,13 @@ __binary_tree_remove(struct binary_tree_node *node)
             struct binary_tree_node *n = node->left;
             void *t;
 
-            while (n->right != BINARY_TREE_EMPTY_BRANCH) {
+            while (n->right != BINARY_TREE_EMPTY_BRANCH)
                 n = n->right;
-            }
 
             *pp0 = *pp1 = node->left;
             (*pp0)->parent = p;
 
             node->right->parent = n;
-            n->parent = p;
             n->right = node->right;
 
             n->weight += node->right->weight + 1;
@@ -731,16 +729,13 @@ __binary_tree_remove(struct binary_tree_node *node)
 #endif
         {
             struct binary_tree_node *n = node->right;
-
-            while (n->left != BINARY_TREE_EMPTY_BRANCH) {
+            while (n->left != BINARY_TREE_EMPTY_BRANCH)
                 n = n->left;
-            }
 
             *pp0 = *pp1 = node->right;
             (*pp0)->parent = p;
 
             node->left->parent = n;
-            n->parent = p;
             n->left = node->left;
 
             n->weight += node->left->weight + 1;
