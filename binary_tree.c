@@ -16,8 +16,10 @@ binary_tree_rotate_left(struct binary_tree_node *node)
     else
         pp1 = pp0;
 
+#if defined(BINARY_TREE_RANDOM)
     node->weight -= r->weight + 1;
     r->weight += node->weight + 1;
+#endif
 
     *pp1 = *pp0 = r;
     node->right = r->left;
@@ -25,7 +27,9 @@ binary_tree_rotate_left(struct binary_tree_node *node)
 
     if (node->right) {
         node->right->parent = node;
+#if defined(BINARY_TREE_RANDOM)
         node->weight += node->right->weight + 1;
+#endif
     }
 
     r->parent = p;
@@ -43,8 +47,10 @@ binary_tree_rotate_right(struct binary_tree_node *node)
     else
         pp1 = pp0;
 
+#if defined(BINARY_TREE_RANDOM)
     node->weight -= l->weight + 1;
     l->weight += node->weight + 1;
+#endif
 
     *pp1 = *pp0 = l;
     node->left = l->right;
@@ -52,7 +58,9 @@ binary_tree_rotate_right(struct binary_tree_node *node)
 
     if (node->left) {
         node->left->parent = node;
+#if defined(BINARY_TREE_RANDOM)
         node->weight += node->left->weight + 1;
+#endif
     }
 
     l->parent = p;
@@ -84,14 +92,6 @@ binary_tree_avl_big_right_turn(struct binary_tree_node *node,
     }
 
     bottom->balance = 0;
-
-    node->weight -= pivot->weight + 1;
-    if (bottom->left != BINARY_TREE_EMPTY_BRANCH)
-        node->weight += bottom->left->weight + 1;
-    pivot->weight -= bottom->weight + 1;
-    if (bottom->right != BINARY_TREE_EMPTY_BRANCH)
-        pivot->weight += bottom->right->weight + 1;
-    bottom->weight = node->weight + pivot->weight + 2;
 
     node->right = bottom->left;
     if (node->right != BINARY_TREE_EMPTY_BRANCH)
@@ -125,13 +125,6 @@ binary_tree_avl_small_right_turn(struct binary_tree_node *node,
     } else {
         node->balance = pivot->balance = 0;
     }
-
-    node->weight -= pivot->weight + 1;
-    if (pivot->left!=BINARY_TREE_EMPTY_BRANCH) {
-        node->weight += pivot->left->weight + 1;
-        pivot->weight -= pivot->left->weight + 1;
-    }
-    pivot->weight += node->weight + 1;
 
     node->right = pivot->left;
     if (node->right != BINARY_TREE_EMPTY_BRANCH)
@@ -167,14 +160,6 @@ binary_tree_avl_big_left_turn(struct binary_tree_node *node,
 
     bottom->balance = 0;
 
-    node->weight -= pivot->weight + 1;
-    if (bottom->right != BINARY_TREE_EMPTY_BRANCH)
-        node->weight += bottom->right->weight + 1;
-    pivot->weight -= bottom->weight + 1;
-    if (bottom->left != BINARY_TREE_EMPTY_BRANCH)
-        pivot->weight += bottom->left->weight + 1;
-    bottom->weight = node->weight + pivot->weight + 2;
-
     node->left = bottom->right;
     if (node->left != BINARY_TREE_EMPTY_BRANCH)
         node->left->parent = node;
@@ -208,13 +193,6 @@ binary_tree_avl_small_left_turn(struct binary_tree_node *node,
         node->balance = pivot->balance = 0;
     }
     pivot->parent = node->parent;
-
-    node->weight -= pivot->weight + 1;
-    if (pivot->right != BINARY_TREE_EMPTY_BRANCH) {
-        node->weight += pivot->right->weight + 1;
-        pivot->weight -= pivot->right->weight + 1;
-    }
-    pivot->weight += node->weight + 1;
 
     node->left = pivot->right;
     if (node->left != BINARY_TREE_EMPTY_BRANCH)
@@ -461,11 +439,8 @@ ____binary_tree_add(struct binary_tree_node *root,
 {
     cmp_result_t res;
     struct binary_tree_node **n, *r = root;
-    int weight = node->weight + 1;
 
     for (;;) {
-        r->weight += weight;
-
         res = cmp(r, node);
         n = BINARY_TREE_DIRECTION_LEFT(res)?&r->left:&r->right;
         if (*n == BINARY_TREE_EMPTY_BRANCH) {
@@ -630,7 +605,9 @@ __binary_tree_detach(struct binary_tree_node *node)
             p->right = BINARY_TREE_EMPTY_BRANCH;
 
         while (!binary_tree_top(p)) {
+#if defined(BINARY_TREE_RANDOM)
             p->weight -= node->weight + 1;
+#endif
             p = p->parent;
         }
 
@@ -704,7 +681,6 @@ __binary_tree_remove(struct binary_tree_node *node)
         node->left = BINARY_TREE_EMPTY_BRANCH;
 
         swap(&n->color, &node->color);
-        swap(&n->weight, &node->weight);
 
         goto delete_node;
 #else
@@ -738,13 +714,17 @@ __binary_tree_remove(struct binary_tree_node *node)
             node->left->parent = n;
             n->left = node->left;
 
+#if defined(BINARY_TREE_RANDOM)
             n->weight += node->left->weight + 1;
+#endif
         }
 #endif
     }
 
     while (!binary_tree_top(p)) {
+#if defined(BINARY_TREE_RANDOM)
         --p->weight;
+#endif
         p = p->parent;
     }
 

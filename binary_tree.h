@@ -8,13 +8,14 @@ struct binary_tree_node {
     struct binary_tree_node *parent;
     struct binary_tree_node *left;
     struct binary_tree_node *right;
-    unsigned int weight;
 #if defined(BINARY_TREE_AVL)
     int balance;
 #elif defined(BINARY_TREE_RB)
 #define BINARY_TREE_RB_RED 0
 #define BINARY_TREE_RB_BLACK 1
     unsigned int color;
+#elif defined(BINARY_TREE_RANDOM)
+    unsigned int weight;
 #endif
 };
 
@@ -41,11 +42,12 @@ static inline void __binary_tree_init_root(struct binary_tree_node *root)
     root->parent = root;
     root->left = root;
     root->right = root;
-    root->weight = -1;
 #if defined(BINARY_TREE_AVL)
     root->balance = -1;
 #elif defined(BINARY_TREE_RB)
     root->color = -1;
+#elif defined(BINARY_TREE_RANDOM)
+    root->weight = -1;
 #endif
 }
 
@@ -60,11 +62,12 @@ static inline void binary_tree_init_node(struct binary_tree_node *node)
     node->parent = node;
     node->left = BINARY_TREE_EMPTY_BRANCH;
     node->right = BINARY_TREE_EMPTY_BRANCH;
-    node->weight = 0;
 #if defined(BINARY_TREE_AVL)
     node->balance = 0;
 #elif defined(BINARY_TREE_RB)
     node->color = BINARY_TREE_RB_RED;
+#elif defined(BINARY_TREE_RANDOM)
+    node->weight = 0;
 #endif
 }
 
