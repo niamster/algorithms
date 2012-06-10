@@ -2,7 +2,7 @@ CC		:= gcc
 CFLAGS	:= -O3
 ALGOS	:= qsort binary-search \
 		htable-list wq \
-		htable-tree binary-tree binary-tree-avl binary-tree-rb \
+		htable-tree binary-tree binary-tree-avl binary-tree-rb binary-tree-random \
 		kalman moving-average alpha-beta alpha-beta-gamma
 LDFLAGS := -lpthread
 
@@ -54,6 +54,9 @@ binary-tree-avl: binary_tree.c $(HELPERS)
 
 binary-tree-rb: binary_tree.c $(HELPERS)
 	$(Q)$(CC) $^ -DBINARY_TREE_MAIN -DBINARY_TREE_RB $(CFLAGS) -o $@ $(LDFLAGS)
+
+binary-tree-random: binary_tree.c $(HELPERS)
+	$(Q)$(CC) $^ -DBINARY_TREE_MAIN -DBINARY_TREE_RANDOM -DBINARY_TREE_RANDOM_PREGEN=0xFFFF $(CFLAGS) -o $@ $(LDFLAGS)
 
 binary-search: binary_search.c qsort.c $(HELPERS)
 	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
@@ -113,7 +116,7 @@ test-htable: htable-list htable-tree htable-tree-avl
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then ./htable-tree-avl -f additive -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd -g $@-tree-avl-additive.$(TST_RND_CNT).dot $(RFLAGS); else ./htable-tree-avl -f additive -s $(TST_HASH_SIZE) -i $@.$(TST_RND_CNT).rnd $(RFLAGS); fi
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then dot -Tpng -o $@-tree-avl-additive.$(TST_RND_CNT).png $@-tree-avl-additive.$(TST_RND_CNT).dot; fi
 
-test-binary-tree: binary-tree binary-tree-avl binary-tree-rb
+test-binary-tree: binary-tree binary-tree-avl binary-tree-rb binary-tree-random
 	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
 
 	$(Q)echo "binary-tree"
@@ -125,6 +128,9 @@ test-binary-tree: binary-tree binary-tree-avl binary-tree-rb
 	$(Q)echo "binary-tree-rb"
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then ./binary-tree-rb -i $@.$(TST_RND_CNT).rnd -g $@-rb.$(TST_RND_CNT).dot $(RFLAGS); else ./binary-tree-rb -i $@.$(TST_RND_CNT).rnd $(RFLAGS); fi
 	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then dot -Tpng -o $@-rb.$(TST_RND_CNT).png $@-rb.$(TST_RND_CNT).dot; fi
+	$(Q)echo "binary-tree-random"
+	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then ./binary-tree-random -i $@.$(TST_RND_CNT).rnd -g $@-random.$(TST_RND_CNT).dot $(RFLAGS); else ./binary-tree-random -i $@.$(TST_RND_CNT).rnd $(RFLAGS); fi
+	$(Q)if test "$(TST_GEN_GRAPH)" = "yes"; then dot -Tpng -o $@-random.$(TST_RND_CNT).png $@-random.$(TST_RND_CNT).dot; fi
 
 test-binary-search: binary-search
 	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
@@ -250,4 +256,4 @@ test-filters: moving-average kalman alpha-beta alpha-beta-gamma
 
 
 clean:
-	$(Q)rm -rf $(ALGOS)
+	$(Q)rm -rf $(ALGOS) *.out *.png *.rnd *.dot

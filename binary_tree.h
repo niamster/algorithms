@@ -120,7 +120,7 @@ static inline void binary_tree_detach(struct binary_tree_node *node)
     }
 }
 
-/* Keeps right- and left- most fields up o date */
+/* Keeps rightmost and leftmost fields up to date */
 static inline void binary_tree_detach2(struct binary_tree_root *root,
         struct binary_tree_node *node)
 {
@@ -165,7 +165,7 @@ static inline binary_tree_remove(struct binary_tree_node *node)
     }
 }
 
-/* Keeps right- and left- most fields up o date */
+/* Keeps rightmost and leftmost fields up to date */
 static inline binary_tree_remove2(struct binary_tree_root *root,
         struct binary_tree_node *node)
 {
