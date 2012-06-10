@@ -404,8 +404,8 @@ rotating_hash(const char *key,
     || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
 #define get16bits(d) (*((const unsigned short *) (d)))
 #else
-#define get16bits(d) ((((unsigned int)(((const uint8_t *)(d))[1])) << 8)    \
-            +(unsigned int)(((const uint8_t *)(d))[0]) )
+#define get16bits(d) ((((unsigned int)(((const unsigned char *)(d))[1])) << 8)    \
+            +(unsigned int)(((const unsigned char *)(d))[0]) )
 #endif
 
 unsigned int
