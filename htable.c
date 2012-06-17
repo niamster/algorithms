@@ -120,15 +120,22 @@ __dump_htable_binary_tree_graph(struct binary_tree_node *root,
 {
     struct hash_node *node = container_of(root, struct hash_node, tree);
 
-    ++info->id;
+    dot_dump_node(info->out, "binary_tree_node", (unsigned long)root, node->data->key);
 
-    dot_dump_node(info->out, "binary_tree_node", info->id, node->data->key);
     if (root->left != BINARY_TREE_EMPTY_BRANCH) {
-        dot_dump_link_node_to_node(info->out, "binary_tree_node", info->id, "binary_tree_node", info->id+1);
+        dot_dump_link_node_to_node(info->out, "binary_tree_node", (unsigned long)root, "binary_tree_node", (unsigned long)root->left);
+    } else {
+        dot_dump_shape_colored(info->out, "NULL", info->id, "", "red", "black", "black", "circle");
+        dot_dump_link_node_to_node(info->out, "binary_tree_node", (unsigned long)root, "NULL", (unsigned long)info->id);
+        ++info->id;
     }
+
     if (root->right != BINARY_TREE_EMPTY_BRANCH) {
-        int weight = root->left!=BINARY_TREE_EMPTY_BRANCH?root->left->weight+1:0;
-        dot_dump_link_node_to_node(info->out, "binary_tree_node", info->id, "binary_tree_node", info->id+weight+1);
+        dot_dump_link_node_to_node(info->out, "binary_tree_node", (unsigned long)root, "binary_tree_node", (unsigned long)root->right);
+    } else {
+        dot_dump_shape_colored(info->out, "NULL", info->id, "", "red", "black", "black", "circle");
+        dot_dump_link_node_to_node(info->out, "binary_tree_node", (unsigned long)root, "NULL", (unsigned long)info->id);
+        ++info->id;
     }
 }
 #endif
@@ -140,7 +147,10 @@ dump_htable_graph(const char *graph,
     int i;
     FILE *out = fopen(graph, "w+");
 #if defined(HTABLE_TREE)
-    int shift = 0;
+    struct binary_tree_node_dot_info info = {
+        .out = out,
+        .id = 0
+    };
 #endif
 
     if (!out)
@@ -155,20 +165,24 @@ dump_htable_graph(const char *graph,
             dot_dump_link_table_to_sllist_head(out, "htable", i, "list", i);
         }
 #elif defined(HTABLE_TREE)
-        struct binary_tree_node_dot_info info = {
-            .out = out,
-            .id = shift
-        };
         binary_tree_traverse(binary_tree_traverse_type_prefix,
                              &hash_table->table[i], (binary_tree_traverse_cbk_t)__dump_htable_binary_tree_graph, (void *)&info);
-        dot_dump_link_table_to_node(out, "htable", i, "binary_tree_node", shift + 1);
-        shift += binary_tree_node(&hash_table->table[i])->weight + 1;
+        dot_dump_link_table_to_node(out, "htable", i, "binary_tree_node", (unsigned long)binary_tree_node(&hash_table->table[i]));
 #endif
     }
     dot_dump_end(out);
 
     fclose(out);
 }
+
+#if defined(HTABLE_TREE)
+static void
+htable_binary_tree_weight(struct binary_tree_node *node, void *data)
+{
+    int *weight = (int *)data;
+    ++weight;
+}
+#endif
 
 void
 print_htable_summary(struct hash_table *hash_table,
@@ -186,7 +200,7 @@ print_htable_summary(struct hash_table *hash_table,
             ++level_count;
         }
 #elif defined(HTABLE_TREE)
-        level_count = binary_tree_node(&hash_table->table[i])->weight + 1;
+        binary_tree_traverse(binary_tree_traverse_type_infix, &hash_table->table[i], htable_binary_tree_weight, (void *)&level_count);
 #endif
 
         printf("Level %5d: %5d entries(%.2f%%)\n", i, level_count, ((float)level_count/(float)count)*100);
