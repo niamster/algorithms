@@ -360,33 +360,21 @@ binary_tree_rb_rebalance_on_delete(struct binary_tree_node *node)
         }
     }
 }
-#elif defined(BINARY_TREE_RANDOM)
-#if defined(BINARY_TREE_RANDOM_PREGEN) && BINARY_TREE_RANDOM_PREGEN > 0
-static unsigned int *binary_tree_random = NULL;
-static unsigned int binary_tree_idx = -1;
-
-void binary_tree_generate_random(void) __attribute__((constructor));
-
-void
-binary_tree_generate_random(void)
+#elif defined(BINARY_TREE_TREAP)
+static void
+binary_tree_treap_rebalance(struct binary_tree_node *node)
 {
-    unsigned int count = BINARY_TREE_RANDOM_PREGEN;
+    struct binary_tree_node *p = node->parent;
 
-    generate_array(&binary_tree_random, &count, "/dev/urandom");
-}
+    while (!binary_tree_top(node) && node->prio > p->prio) {
+        if (p->left == node)
+            binary_tree_rotate_right(p);
+        else
+            binary_tree_rotate_left(p);
 
-static inline unsigned int
-binary_tree_get_random(void)
-{
-    return binary_tree_random[++binary_tree_idx%BINARY_TREE_RANDOM_PREGEN];
+        p = node->parent;
+    }
 }
-#else
-static inline unsigned int
-binary_tree_get_random(void)
-{
-    return generate_random();
-}
-#endif
 #endif
 
 #if defined(BINARY_TREE_RANDOM)
@@ -401,7 +389,7 @@ ____binary_tree_add(struct binary_tree_node *root,
 
     for (;;) {
         if (dst == NULL
-                && binary_tree_get_random()%(1+r->weight) == 0)
+                && get_random()%(1+r->weight) == 0)
             dst = r;
 
         r->weight += weight;
@@ -421,13 +409,15 @@ ____binary_tree_add(struct binary_tree_node *root,
     }
 
     if (dst) {
-        n = &node->parent;
+        r = node->parent;
 
-        while (*n != dst) {
-            if ((*n)->left == node)
-                binary_tree_rotate_right(*n);
+        while (r != dst) {
+            if (r->left == node)
+                binary_tree_rotate_right(r);
             else
-                binary_tree_rotate_left(*n);
+                binary_tree_rotate_left(r);
+
+            r = node->parent;
         }
     }
 }
@@ -498,6 +488,8 @@ __binary_tree_add2(struct binary_tree_root *root,
     binary_tree_avl_rebalance_on_insert(node);
 #elif defined(BINARY_TREE_RB)
     binary_tree_rb_rebalance_on_insert(node);
+#elif defined(BINARY_TREE_TREAP)
+    binary_tree_treap_rebalance(node);
 #endif
 }
 
@@ -615,6 +607,8 @@ __binary_tree_detach(struct binary_tree_node *node)
         binary_tree_avl_rebalance_on_delete(node->parent);
 #elif defined(BINARY_TREE_RB)
         binary_tree_rb_rebalance_on_delete(node->parent);
+#elif defined(BINARY_TREE_TREAP)
+    binary_tree_treap_rebalance(node);
 #endif
     }
 
@@ -686,7 +680,7 @@ __binary_tree_remove(struct binary_tree_node *node)
 #else
 #if defined(BINARY_TREE_RANDOM)
         if (node->left->weight+node->left->weight == 0
-                || binary_tree_get_random()%(node->left->weight+node->left->weight) < node->left->weight) {
+                || get_random()%(node->left->weight+node->left->weight) < node->left->weight) {
 
             struct binary_tree_node *n = node->left;
             void *t;
@@ -773,7 +767,11 @@ __dump_binary_tree_graph(struct binary_tree_node *root,
     char name[100];
     struct bt_node *node = container_of(root, struct bt_node, tree);
 
+#if defined(BINARY_TREE_TREAP)
+    sprintf(name, "%u:%u", node->num, root->prio);
+#else
     sprintf(name, "%u", node->num);
+#endif
 #if defined(BINARY_TREE_RB)
     if (root->color == BINARY_TREE_RB_RED)
         dot_dump_shape_colored(info->out, "binary_tree_node", (unsigned long)root, name, "black", "red", "red", NULL);

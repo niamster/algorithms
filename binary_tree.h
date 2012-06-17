@@ -16,6 +16,8 @@ struct binary_tree_node {
     unsigned int color;
 #elif defined(BINARY_TREE_RANDOM)
     unsigned int weight;
+#elif defined(BINARY_TREE_TREAP)
+    unsigned int prio;
 #endif
 };
 
@@ -48,6 +50,8 @@ static inline void __binary_tree_init_root(struct binary_tree_node *root)
     root->color = -1;
 #elif defined(BINARY_TREE_RANDOM)
     root->weight = -1;
+#elif defined(BINARY_TREE_TREAP)
+    root->prio = -1;
 #endif
 }
 
@@ -68,6 +72,8 @@ static inline void binary_tree_init_node(struct binary_tree_node *node)
     node->color = BINARY_TREE_RB_RED;
 #elif defined(BINARY_TREE_RANDOM)
     node->weight = 0;
+#elif defined(BINARY_TREE_TREAP)
+    node->prio = get_random();
 #endif
 }
 

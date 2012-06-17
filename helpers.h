@@ -1,7 +1,7 @@
 #ifndef _HELPERS_H_
 #define _HELPERS_H_
 
-unsigned int generate_random(void);
+unsigned int get_random(void);
 
 int generate_array(unsigned int **array,
                    int *count,

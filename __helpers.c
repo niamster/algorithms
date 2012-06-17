@@ -7,8 +7,28 @@
 
 #include "helpers.h"
 
-unsigned int
+#if defined(RANDOM_PREGEN) && RANDOM_PREGEN > 0
+static unsigned int *__random_data = NULL;
+static unsigned int __random_idx = -1;
+
+void generate_random(void) __attribute__((constructor));
+
+void
 generate_random(void)
+{
+    unsigned int count = RANDOM_PREGEN;
+
+    generate_array(&__random_data, &count, "/dev/urandom");
+}
+
+unsigned int
+get_random(void)
+{
+    return __random_data[++__random_idx%RANDOM_PREGEN];
+}
+#else
+unsigned int
+get_random(void)
 {
     int v;
     unsigned int r;
@@ -27,7 +47,9 @@ generate_random(void)
     close(v);
 
     return r%10000;
+    return generate_random();
 }
+#endif
 
 int
 generate_array(unsigned int **array,
