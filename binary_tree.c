@@ -238,14 +238,15 @@ binary_tree_avl_rebalance_on_insert(struct binary_tree_node *node)
 static void
 binary_tree_avl_rebalance_on_delete(struct binary_tree_node *node)
 {
-    struct binary_tree_node *p = node->parent, *n = node;
+    struct binary_tree_node *p, *n;
 
-    while (!binary_tree_top(p)) {
-        if (p->left == n)
-            --p->balance;
-        else
-            ++p->balance;
+#warning FIXME: AVR is not rebalanced after node deletion
+    return;
 
+    if (binary_tree_top(node))
+        return;
+
+    for (p=node;;) {
         if (p->balance == -1 || p->balance == 1) {
             break;
         } else if (p->balance == -2) {
@@ -262,8 +263,16 @@ binary_tree_avl_rebalance_on_delete(struct binary_tree_node *node)
             }
         }
 
+        if (binary_tree_top(node->parent))
+            break; // really?
+
         n = p;
         p = p->parent;
+
+        if (p->left == n)
+            --p->balance;
+        else
+            ++p->balance;
     }
 }
 #elif defined(BINARY_TREE_RB)
@@ -596,19 +605,16 @@ __binary_tree_detach(struct binary_tree_node *node)
         else
             p->right = BINARY_TREE_EMPTY_BRANCH;
 
-        while (!binary_tree_top(p)) {
-#if defined(BINARY_TREE_RANDOM)
-            p->weight -= node->weight + 1;
-#endif
-            p = p->parent;
-        }
-
 #if defined(BINARY_TREE_AVL)
         binary_tree_avl_rebalance_on_delete(node->parent);
 #elif defined(BINARY_TREE_RB)
         binary_tree_rb_rebalance_on_delete(node->parent);
-#elif defined(BINARY_TREE_TREAP)
-    binary_tree_treap_rebalance(node);
+#elif defined(BINARY_TREE_RANDOM)
+        while (!binary_tree_top(p)) {
+            p->weight -= node->weight + 1;
+            p = p->parent;
+        }
+
 #endif
     }
 
@@ -625,11 +631,26 @@ __binary_tree_remove(struct binary_tree_node *node)
 #endif
     p = node->parent;
 
+#if defined(BINARY_TREE_AVL)
+    if (binary_tree_root_node(p)) {
+        pp0 = &p->left;
+        pp1 = &p->right;
+    } else {
+        if (p->left == node) {
+            pp0 = pp1 = &p->left;
+            --p->balance;
+        } else {
+            pp0 = pp1 = &p->right;
+            ++p->balance;
+        }
+    }
+#else
     pp0 = (p->left == node)?&p->left:&p->right;
     if (binary_tree_root_node(p))
         pp1 = &p->right;
     else
         pp1 = pp0;
+#endif
 
     if (binary_tree_leaf_node(node)) {
         *pp0 = *pp1 = (binary_tree_root_node(p)?p:BINARY_TREE_EMPTY_BRANCH);
@@ -685,8 +706,10 @@ __binary_tree_remove(struct binary_tree_node *node)
             struct binary_tree_node *n = node->left;
             void *t;
 
-            while (n->right != BINARY_TREE_EMPTY_BRANCH)
+            while (n->right != BINARY_TREE_EMPTY_BRANCH) {
+                n->weight += node->right->weight + 1;
                 n = n->right;
+            }
 
             *pp0 = *pp1 = node->left;
             (*pp0)->parent = p;
@@ -699,8 +722,12 @@ __binary_tree_remove(struct binary_tree_node *node)
 #endif
         {
             struct binary_tree_node *n = node->right;
-            while (n->left != BINARY_TREE_EMPTY_BRANCH)
+            while (n->left != BINARY_TREE_EMPTY_BRANCH) {
+#if defined(BINARY_TREE_RANDOM)
+                n->weight += node->left->weight + 1;
+#endif
                 n = n->left;
+            }
 
             *pp0 = *pp1 = node->right;
             (*pp0)->parent = p;
@@ -708,18 +735,15 @@ __binary_tree_remove(struct binary_tree_node *node)
             node->left->parent = n;
             n->left = node->left;
 
-#if defined(BINARY_TREE_RANDOM)
+#if defined(BINARY_TREE_AVL)
+            // FIXME
+#elif defined(BINARY_TREE_RANDOM)
             n->weight += node->left->weight + 1;
+#elif defined(BINARY_TREE_TREAP)
+            binary_tree_treap_rebalance(n->left);
 #endif
         }
 #endif
-    }
-
-    while (!binary_tree_top(p)) {
-#if defined(BINARY_TREE_RANDOM)
-        --p->weight;
-#endif
-        p = p->parent;
     }
 
 #if defined(BINARY_TREE_AVL)
@@ -727,6 +751,11 @@ __binary_tree_remove(struct binary_tree_node *node)
 #elif defined(BINARY_TREE_RB)
     if (node->color == BINARY_TREE_RB_BLACK && *pp0 != BINARY_TREE_EMPTY_BRANCH)
         binary_tree_rb_rebalance_on_delete(*pp0);
+#elif defined(BINARY_TREE_RANDOM)
+    while (!binary_tree_top(p)) {
+        --p->weight;
+        p = p->parent;
+    }
 #endif
 
     binary_tree_init_node(node);
@@ -767,7 +796,11 @@ __dump_binary_tree_graph(struct binary_tree_node *root,
     char name[100];
     struct bt_node *node = container_of(root, struct bt_node, tree);
 
-#if defined(BINARY_TREE_TREAP)
+#if defined(BINARY_TREE_AVL)
+    sprintf(name, "%u:%d", node->num, root->balance);
+#elif defined(BINARY_TREE_RANDOM)
+    sprintf(name, "%u:%u", node->num, root->weight);
+#elif defined(BINARY_TREE_TREAP)
     sprintf(name, "%u:%u", node->num, root->prio);
 #else
     sprintf(name, "%u", node->num);
@@ -1093,8 +1126,9 @@ int main(int argc, char **argv)
         struct sllist *e;
         struct bt_node *n;
         unsigned int i;
+        unsigned int pivot = count/2;
 
-        for (i=0;i<count/2;++i) {
+        for (i=0;i<pivot;++i) {
             sllist_init(&values);
 
             search_binary_tree(&binary_tree_root.root, array[i], &values, 1);
@@ -1112,14 +1146,15 @@ int main(int argc, char **argv)
                 goto out;
             }
 
+            //printf("Removing %u\n", n->num);
             binary_tree_remove2(&binary_tree_root, binary_tree_node(r->node));
 
             binary_tree_search_results_free(&values);
         }
 
-        printf("Removed %d tree nodes\n", count/2);
+        printf("Removed %d tree nodes\n", pivot);
 
-        for (i=count/2;i<count;++i) {
+        for (i=pivot;i<count;++i) {
             sllist_init(&values);
 
             search_binary_tree(&binary_tree_root.root, array[i], &values, 1);
@@ -1152,7 +1187,7 @@ int main(int argc, char **argv)
 
     gettimeofday(&tb, NULL);
     removed = destroy_binary_tree(&binary_tree_root, pool);
-    printf("Removed: %u\n", removed);
+    printf("Removed %u tree nodes\n", removed);
     gettimeofday(&ta, NULL);
     usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
     secs = usecs/1000000;
