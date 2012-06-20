@@ -13,6 +13,7 @@ struct binary_tree_node {
 #elif defined(BINARY_TREE_RB)
 #define BINARY_TREE_RB_RED 0
 #define BINARY_TREE_RB_BLACK 1
+#define BINARY_TREE_RB_DOUBLE_BLACK 2
     unsigned int color;
 #elif defined(BINARY_TREE_RANDOM)
     unsigned int weight;
@@ -42,7 +43,7 @@ typedef void (*binary_tree_traverse_cbk_t)(struct binary_tree_node *, void *);
 static inline void __binary_tree_init_root(struct binary_tree_node *root)
 {
     root->parent = root;
-    root->left = root;
+    root->left = BINARY_TREE_EMPTY_BRANCH;
     root->right = root;
 #if defined(BINARY_TREE_AVL)
     root->balance = -1;
@@ -77,11 +78,10 @@ static inline void binary_tree_init_node(struct binary_tree_node *node)
 #endif
 }
 
-#define binary_tree_root_node(node) ((node)->left == (node)->right && (node)->left != BINARY_TREE_EMPTY_BRANCH)
-#define binary_tree_top(node) ((node) == (node)->parent)
-#define binary_tree_leaf_node(node) ((node)->left == BINARY_TREE_EMPTY_BRANCH && (node)->right == BINARY_TREE_EMPTY_BRANCH)
-#define binary_tree_empty_root(root) ((root)->left == (root) && (root)->right == (root))
-#define binary_tree_node(root) (binary_tree_root_node(root)?(root)->left:(root))
+#define binary_tree_leaf_node(node)     ((node)->left == BINARY_TREE_EMPTY_BRANCH && (node)->right == BINARY_TREE_EMPTY_BRANCH)
+#define binary_tree_root_node(node)     ((node)->right == (node))
+#define binary_tree_empty_root(node)    (binary_tree_root_node(node) && (node)->left == BINARY_TREE_EMPTY_BRANCH)
+#define binary_tree_node(node)          (binary_tree_root_node(node)?(node)->left:(node))
 
 void __binary_tree_add(struct binary_tree_node *root,
         struct binary_tree_node *node,
@@ -94,7 +94,7 @@ static inline void binary_tree_add(struct binary_tree_node *root, struct binary_
         binary_tree_cmp_cbk_t cmp)
 {
     if (binary_tree_empty_root(root)) {
-        root->left = root->right = node;
+        root->left = node;
         node->parent = root;
 #if defined(BINARY_TREE_RB)
         node->color = BINARY_TREE_RB_BLACK;
@@ -110,7 +110,7 @@ static inline void binary_tree_add2(struct binary_tree_root *root, struct binary
     struct binary_tree_node *r = &root->root;
 
     if (binary_tree_empty_root(r)) {
-        root->leftmost = root->rightmost = r->left = r->right = node;
+        root->leftmost = root->rightmost = r->left = node;
         node->parent = r;
 #if defined(BINARY_TREE_RB)
         node->color = BINARY_TREE_RB_BLACK;
@@ -180,12 +180,12 @@ static inline binary_tree_remove2(struct binary_tree_root *root,
 {
     if (!binary_tree_empty_root(node)) {
         if (root->leftmost == node) {
-            if (binary_tree_top(node->parent))
+            if (binary_tree_root_node(node->parent))
                 root->leftmost = node->right;
             else
                 root->leftmost = node->parent;
         } else if (root->rightmost == node) {
-            if (binary_tree_top(node->parent))
+            if (binary_tree_root_node(node->parent))
                 root->rightmost = node->left;
             else
                 root->rightmost = node->parent;

@@ -40,6 +40,16 @@ swap(unsigned int *x, unsigned int *y)
     }
 }
 
+static inline void
+pswap(void **x, void **y)
+{
+    void *t;
+
+    t = *x;
+    *x = *y;
+    *y = t;
+}
+
 static inline int
 int_sign(int x)
 {
