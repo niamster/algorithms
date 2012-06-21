@@ -89,10 +89,10 @@ test-qsort: qsort
 	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
 
 	$(Q)echo "qsort-1"
-	$(Q)./qsort -s QS1 -i $@.$(TST_RND_CNT).rnd --dump $(RFLAGS)
+	$(Q)./qsort -s QS1 -i $@.$(TST_RND_CNT).rnd $(RFLAGS)
 	$(Q)echo "==========================================="
 	$(Q)echo "qsort-2"
-	$(Q)./qsort -s QS2 -i $@.$(TST_RND_CNT).rnd --dump $(RFLAGS)
+	$(Q)./qsort -s QS2 -i $@.$(TST_RND_CNT).rnd $(RFLAGS)
 	$(Q)echo "==========================================="
 
 test-htable: htable-list htable-tree htable-tree-avl
