@@ -13,7 +13,6 @@ struct binary_tree_node {
 #elif defined(BINARY_TREE_RB)
 #define BINARY_TREE_RB_RED 0
 #define BINARY_TREE_RB_BLACK 1
-#define BINARY_TREE_RB_DOUBLE_BLACK 2
     unsigned int color;
 #elif defined(BINARY_TREE_RANDOM)
     unsigned int weight;
@@ -28,8 +27,15 @@ struct binary_tree_root {
     struct binary_tree_node *rightmost;
 };
 
-#if defined(BINARY_TREE_RB)
+#if defined(BINARY_TREE_AVL)
+#define BINARY_TREE_AVL_NODE_BALANCE(node) ((node)!=BINARY_TREE_EMPTY_BRANCH?(node)->balance:0)
+#elif defined(BINARY_TREE_RB)
 #define BINARY_TREE_RB_NODE_COLOR(node) ((node)!=BINARY_TREE_EMPTY_BRANCH?(node)->color:BINARY_TREE_RB_BLACK)
+#elif defined(BINARY_TREE_RANDOM)
+#define BINARY_TREE_RANDOM_NODE_WEIGHT(node) ((node)!=BINARY_TREE_EMPTY_BRANCH?(node)->weight:0)
+#define BINARY_TREE_RANDOM_NODE_WEIGHT_INCLUSIVE(node) ((node)!=BINARY_TREE_EMPTY_BRANCH?(node)->weight+1:0)
+#elif defined(BINARY_TREE_TREAP)
+#define BINARY_TREE_TREAP_NODE_PRIO(node) ((node)!=BINARY_TREE_EMPTY_BRANCH?(node)->prio:0)
 #endif
 
 typedef cmp_result_t (*binary_tree_cmp_cbk_t)(struct binary_tree_node *, struct binary_tree_node *);
