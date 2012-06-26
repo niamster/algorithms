@@ -9,7 +9,7 @@ struct binary_tree_node {
     struct binary_tree_node *left;
     struct binary_tree_node *right;
 #if defined(BINARY_TREE_AVL)
-    int balance;
+    int height;
 #elif defined(BINARY_TREE_RB)
 #define BINARY_TREE_RB_RED 0
 #define BINARY_TREE_RB_BLACK 1
@@ -28,7 +28,8 @@ struct binary_tree_root {
 };
 
 #if defined(BINARY_TREE_AVL)
-#define BINARY_TREE_AVL_NODE_BALANCE(node) ((node)!=BINARY_TREE_EMPTY_BRANCH?(node)->balance:0)
+#define BINARY_TREE_AVL_NODE_HEIGHT(node) ((node)!=BINARY_TREE_EMPTY_BRANCH?(node)->height:0)
+#define BINARY_TREE_AVL_NODE_BALANCE(node) (BINARY_TREE_AVL_NODE_HEIGHT((node)->left)-BINARY_TREE_AVL_NODE_HEIGHT((node)->right))
 #elif defined(BINARY_TREE_RB)
 #define BINARY_TREE_RB_NODE_COLOR(node) ((node)!=BINARY_TREE_EMPTY_BRANCH?(node)->color:BINARY_TREE_RB_BLACK)
 #elif defined(BINARY_TREE_RANDOM)
@@ -52,7 +53,7 @@ static inline void __binary_tree_init_root(struct binary_tree_node *root)
     root->left = BINARY_TREE_EMPTY_BRANCH;
     root->right = root;
 #if defined(BINARY_TREE_AVL)
-    root->balance = -1;
+    root->height = -1;
 #elif defined(BINARY_TREE_RB)
     root->color = -1;
 #elif defined(BINARY_TREE_RANDOM)
@@ -74,7 +75,7 @@ static inline void binary_tree_init_node(struct binary_tree_node *node)
     node->left = BINARY_TREE_EMPTY_BRANCH;
     node->right = BINARY_TREE_EMPTY_BRANCH;
 #if defined(BINARY_TREE_AVL)
-    node->balance = 0;
+    node->height = 1;
 #elif defined(BINARY_TREE_RB)
     node->color = BINARY_TREE_RB_RED;
 #elif defined(BINARY_TREE_RANDOM)
