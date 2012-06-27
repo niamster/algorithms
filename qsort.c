@@ -43,14 +43,63 @@ void __quick_sort_parallel_join(struct sort_data *data)
 }
 
 void
-__quick_sort1(struct sort_data *data)
+__quick_sort1_v0(unsigned int *array,
+                 unsigned int count)
+{
+    unsigned int m = (count-1)/2;
+    unsigned int l, r;
+    unsigned int *l_array, *r_array;
+    unsigned int l_count = 0, r_count = 0;
+    unsigned int pivot;
+
+    if (count <= 1)
+        return;
+
+    if (count == 2) {
+        if (array[0] > array[1])
+            swap(&array[0], &array[1]);
+
+        return;
+    }
+
+    l_array = malloc(count*sizeof(unsigned int));
+    r_array = malloc(count*sizeof(unsigned int));
+
+    pivot = array[m];
+
+    for (l=0;l<count;++l) {
+        if (l == m)
+            continue;
+
+        if (array[l] <= pivot)
+            l_array[l_count++] = array[l];
+        else
+            r_array[r_count++] = array[l];
+    }
+
+    __quick_sort1_v0(l_array, l_count);
+    __quick_sort1_v0(r_array, r_count);
+
+    for (l=0;l<l_count;++l)
+        array[l] = l_array[l];
+    array[l++] = pivot;
+
+    for (r=0;r<r_count;++l, ++r)
+        array[l] = r_array[r];
+
+    free(l_array);
+    free(r_array);
+}
+
+void
+__quick_sort1_v1(struct sort_data *data)
 {
     struct sort_data sort_data[] = {
         [0] = {
-            .quick_sort = __quick_sort1,
+            .quick_sort = __quick_sort1_v1,
         },
         [1] = {
-            .quick_sort = __quick_sort1,
+            .quick_sort = __quick_sort1_v1,
         },
     };
     unsigned int *array = data->array;
@@ -100,8 +149,8 @@ __quick_sort1(struct sort_data *data)
         __quick_sort_parallel_join(&sort_data[0]);
         __quick_sort_parallel_join(&sort_data[1]);
     } else {
-        __quick_sort1(&sort_data[0]);
-        __quick_sort1(&sort_data[1]);
+        __quick_sort1_v1(&sort_data[0]);
+        __quick_sort1_v1(&sort_data[1]);
     }
 
     for (l=0;l<l_count;++l)
@@ -115,17 +164,24 @@ __quick_sort1(struct sort_data *data)
     free(r_array);
 }
 
-#if 0
 void
 __quick_sort2_v0(unsigned int *array,
                  unsigned int l, unsigned int r)
 {
+    long count = (long)r-(long)l+1;
     unsigned int m = (l+r)/2;
     unsigned int i, s;
     unsigned int pivot;
 
-    if (l >= r)
+    if (count <= 1)
         return;
+
+    if (count == 2) {
+        if (array[l] > array[r])
+            swap(&array[l], &array[r]);
+
+        return;
+    }
 
     pivot = array[m];
 
@@ -140,17 +196,10 @@ __quick_sort2_v0(unsigned int *array,
 
     swap(&array[s], &array[r]);
 
-    __quick_sort2_v0(array, l, s-1);
-    __quick_sort2_v0(array, s+1, r);
+    if (s != l)
+        __quick_sort2_v0(array, l, s-1);
+    __quick_sort2_v0(array, s, r);
 }
-
-void
-quick_sort2_v0(unsigned int *array,
-               unsigned int count)
-{
-    __quick_sort2_v0(array, 0, count-1);
-}
-#endif
 
 void
 __quick_sort2_v1(struct sort_data *data)
@@ -214,26 +263,17 @@ __quick_sort2_v1(struct sort_data *data)
 }
 
 void
-quick_sort2(unsigned int *array,
-            unsigned int count)
-{
-    struct sort_data sort_data = {
-        .quick_sort = __quick_sort2_v1,
-        .array = array,
-        .count = count
-    };
-    __quick_sort2_v1(&sort_data);
-}
-
-void
 quick_sort1(unsigned int *array,
             unsigned int count)
 {
-    struct sort_data sort_data = {
-        .array = array,
-        .count = count
-    };
-    __quick_sort1(&sort_data);
+    __quick_sort1_v0(array, count);
+}
+
+void
+quick_sort2(unsigned int *array,
+            unsigned int count)
+{
+    __quick_sort2_v0(array, 0, count-1);
 }
 
 void quick_sort1_parallel(unsigned int *array,
@@ -245,7 +285,7 @@ void quick_sort1_parallel(unsigned int *array,
         .count = count,
         .max_threads = threads,
     };
-    __quick_sort1(&sort_data);
+    __quick_sort1_v1(&sort_data);
 }
 
 void quick_sort2_parallel(unsigned int *array,
