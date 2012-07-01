@@ -1,6 +1,6 @@
 CC		:= gcc
 CFLAGS	:= -O3
-ALGOS	:= qsort hsort binary-search \
+ALGOS	:= qsort hsort msort binary-search \
 		htable-list htable-tree htable-tree-avl wq \
 		binary-tree binary-tree-avl binary-tree-rb binary-tree-random binary-tree-treap \
 		kalman moving-average alpha-beta alpha-beta-gamma
@@ -41,6 +41,9 @@ qsort: qsort.c $(HELPERS)
 
 hsort: hsort.c $(HELPERS)
 	$(Q)$(CC) -DHSORT_MAIN $^ $(CFLAGS) -o $@ $(LDFLAGS)
+
+msort: msort.c qsort.c $(HELPERS)
+	$(Q)$(CC) -DMSORT_MAIN $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
 htable-list: htable.c $(HELPERS)
 	$(Q)$(CC) $^ -DHTABLE_LIST $(CFLAGS) -o $@ $(LDFLAGS)
@@ -117,7 +120,22 @@ test-hsort: hsort
 	$(Q)./hsort -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
 	$(Q)echo "==========================================="
 
-test-sort: qsort hsort
+test-msort: msort
+	$(Q)mkdir -p $(OUT_DIR)
+
+	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $(OUT_DIR)/$@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$(OUT_DIR)/$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
+
+	$(Q)echo "msort-1 single threaded"
+	$(Q)./msort -s MS1 -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
+	$(Q)echo "==========================================="
+	$(Q)echo "msort-1"
+	$(Q)./msort -s MS1 -t2 -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
+	$(Q)echo "==========================================="
+	$(Q)echo "msort-2"
+	$(Q)./msort -s MS2 -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
+	$(Q)echo "==========================================="
+
+test-sort: qsort hsort msort
 	$(Q)mkdir -p $(OUT_DIR)
 
 	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $(OUT_DIR)/$@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$(OUT_DIR)/$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
@@ -136,6 +154,15 @@ test-sort: qsort hsort
 	$(Q)echo "==========================================="
 	$(Q)echo "hsort"
 	$(Q)./hsort -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
+	$(Q)echo "==========================================="
+	$(Q)echo "msort-1 single threaded"
+	$(Q)./msort -s MS1 -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
+	$(Q)echo "==========================================="
+	$(Q)echo "msort-1"
+	$(Q)./msort -s MS1 -t2 -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
+	$(Q)echo "==========================================="
+	$(Q)echo "msort-2"
+	$(Q)./msort -s MS2 -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
 	$(Q)echo "==========================================="
 
 test-htable: htable-list htable-tree htable-tree-avl

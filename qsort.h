@@ -2,7 +2,7 @@
 #define QSORT_H
 
 /* Implementation of qsort
-   1st variant uses merge-like algorithm to divide an array into the subsets: allocates memory for for each and then merges back
+   1st variant uses merge-like algorithm to divide an array into the subsets: allocates memory for each subset and then merges back
    2nd variant uses the same array to process the subset
 
    _parallel versions attempt to process subsets simultaneously
