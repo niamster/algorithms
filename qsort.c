@@ -327,7 +327,7 @@ int main(unsigned int argc, char **argv)
     unsigned int count = 0;
     unsigned int threads = 0;
     const char *input_data = "/dev/random", *output_data = NULL;
-    unsigned int *array;
+    unsigned int *array, *origin = NULL;
 
     int opt;
     const struct option options[] = {
@@ -374,6 +374,13 @@ int main(unsigned int argc, char **argv)
     if (generate_array(&array, &count, input_data) == -1)
         return 1;
 
+    origin = malloc(count*sizeof(unsigned int));
+    if (!origin) {
+        fprintf(stderr, "Unable to allocate %u bytes to store origin array\n", count*sizeof(unsigned int));
+        goto out;
+    }
+    memcpy(origin, array, count*sizeof(unsigned int));
+
     printf("Elements: %d\n", count);
     if (dump) {
         printf("\nOriginal array:\n");
@@ -417,6 +424,19 @@ int main(unsigned int argc, char **argv)
                         array[i-1], i-1, array[i], i);
     }
 
+    {
+        unsigned int i, j;
+        for (i=0;i<count;++i) {
+            unsigned int o = origin[i];
+            for (j=0;j<count;++j)
+                if (array[j] == o)
+                    break;
+
+            if (j==count)
+                fprintf(stderr, "Sorted array does not contain %u from origin\n", o);
+        }
+    }
+
     if (dump) {
         printf("\nSorted array:\n");
         print_array(array, count);
@@ -436,6 +456,8 @@ int main(unsigned int argc, char **argv)
 
   out:
     free(array);
+    if (origin)
+        free(origin);
 
     return 0;
 }
