@@ -273,6 +273,9 @@ void
 quick_sort2(unsigned int *array,
             unsigned int count)
 {
+    if (count <= 1)
+        return;
+
     __quick_sort2_v0(array, 0, count-1);
 }
 
