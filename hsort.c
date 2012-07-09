@@ -9,70 +9,91 @@
 #include <stdbool.h>
 
 #include "helpers.h"
-
+#include "hsort.h"
 
 static void
-heap_push(unsigned int *array, unsigned int e, unsigned int count)
+heap_push(void *array,
+        unsigned int e,
+        unsigned int count,
+        unsigned int size,
+        swap_t swp,
+        compare_t cmp)
 {
     unsigned int l, r;
     unsigned int m;
-    unsigned int max;
 
     for (;;) {
         l = 2*e + 1;
         r = 2*e + 2;
 
         m = e;
-        max = array[m];
 
-        if (l < count && array[l] > max) {
+        if (l < count && cmp(array+l*size, array+m*size) == cmp_result_greater)
             m = l;
-            max = array[m];
-        }
 
-        if (r < count && array[r] > max)
+        if (r < count && cmp(array+r*size, array+m*size) == cmp_result_greater)
             m = r;
 
         if (m == e)
             break;
 
-        swap(&array[m], &array[e]);
+        swp(array+m*size, array+e*size);
         e = m;
     }
 }
 
 static void
-heap_build(unsigned int *array, unsigned int count)
+heap_build(void *array,
+        unsigned int count,
+        unsigned int size,
+        swap_t swp,
+        compare_t cmp)
 {
     long m = (count-1)/2;
 
     for (;m>=0;--m)
-        heap_push(array, m, count);
+        heap_push(array, m, count, size, swp, cmp);
 }
 
 void
-heap_sort(unsigned int *array, unsigned int count)
+heap_sort(void *array,
+        unsigned int count,
+        unsigned int size,
+        swap_t swp,
+        compare_t cmp)
 {
     if (count <= 1)
         return;
 
     if (count == 2) {
-        if (array[0] > array[1])
-            swap(&array[0], &array[1]);
+        if (cmp(array, array+size) == cmp_result_greater)
+            swp(array, array+size);
 
         return;
     }
 
-    heap_build(array, count);
+    heap_build(array, count, size, swp, cmp);
 
     while (--count > 0) {
-        swap(&array[0], &array[count]);
-        heap_push(array, 0, count);
+        swp(array, array+count*size);
+        heap_push(array, 0, count, size, swp, cmp);
     }
 }
 
 #ifdef HSORT_MAIN
-int
+static void
+uint_swap(void *a, void *b)
+{
+    swap((unsigned int *)a, (unsigned int *)b);
+}
+
+static cmp_result_t
+uint_cmp(void *a, void *b)
+{
+    return (cmp_result_t)int_sign(*(unsigned int *)a - *(unsigned int *)b);
+}
+
+static int
 usage(const char *prog)
 {
     fprintf(stderr, "Usage:\n");
@@ -134,7 +155,7 @@ int main(unsigned int argc, char **argv)
     }
 
     gettimeofday(&tb, NULL);
-    heap_sort(array, count);
+    heap_sort(array, count, sizeof(unsigned int), uint_swap, uint_cmp);
     gettimeofday(&ta, NULL);
 
     usecs = ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
