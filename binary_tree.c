@@ -281,7 +281,7 @@ ____binary_tree_add(struct binary_tree_node *root,
 
         r->weight += weight;
 
-        res = cmp(r, node);
+        res = cmp(node, r);
 
         n = BINARY_TREE_DIRECTION_LEFT(res)?&r->left:&r->right;
 
@@ -318,7 +318,7 @@ ____binary_tree_add(struct binary_tree_node *root,
     struct binary_tree_node **n, *r = root;
 
     for (;;) {
-        res = cmp(r, node);
+        res = cmp(node, r);
         n = BINARY_TREE_DIRECTION_LEFT(res)?&r->left:&r->right;
 
         if (*n == BINARY_TREE_EMPTY_BRANCH) {
@@ -357,9 +357,9 @@ __binary_tree_add2(struct binary_tree_root *root,
     ____binary_tree_add(binary_tree_node(&root->root), node, cmp);
 
 #if defined(BINARY_TREE_RANDOM)
-    if (cmp(root->leftmost, node) == cmp_result_less)
+    if (cmp(node, root->leftmost) == cmp_result_less)
         root->leftmost = node;
-    else if (cmp(root->rightmost, node) == cmp_result_greater)
+    else if (cmp(node, root->rightmost) == cmp_result_greater)
         root->rightmost = node;
 #else
     p = node->parent;
@@ -626,7 +626,7 @@ binary_tree_integer_cmp(struct binary_tree_node *one,
     struct bt_node *_one = container_of(one, struct bt_node, tree);
     struct bt_node *_two = container_of(two, struct bt_node, tree);
 
-    return (cmp_result_t)int_sign(_two->num - _one->num);
+    return (cmp_result_t)int_sign(_one->num - _two->num);
 }
 
 struct binary_tree_node_dot_info {
