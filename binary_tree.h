@@ -202,7 +202,7 @@ static inline binary_tree_remove2(struct binary_tree_root *root,
     }
 }
 
-struct binary_tree_node_search_result {
+struct binary_tree_search_result {
     struct sllist list;
     struct binary_tree_node *node;
 };
@@ -214,7 +214,7 @@ void __binary_tree_search(struct binary_tree_node *root,
                         int limit);
 
 /**
- * return list of binary_tree_search_result instances
+ * returns list of binary_tree_search_result instances
  */
 static inline void binary_tree_search(struct binary_tree_node *root,
         void *key,

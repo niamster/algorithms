@@ -390,15 +390,15 @@ __binary_tree_search(struct binary_tree_node *root,
 {
     cmp_result_t res;
     struct binary_tree_node *n = root;
-    struct binary_tree_node_search_result *result;
+    struct binary_tree_search_result *result;
     int matched = 0;
 
     do {
         res = match(n, key);
 
         if (res == cmp_result_equal) {
-            if (!(result = malloc(sizeof(struct binary_tree_node_search_result)))) {
-                fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct binary_tree_node_search_result), strerror(errno));
+            if (!(result = malloc(sizeof(struct binary_tree_search_result)))) {
+                fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct binary_tree_search_result), strerror(errno));
                 break;
             }
 
@@ -464,10 +464,12 @@ void
 binary_tree_search_results_free(struct sllist *results)
 {
     struct sllist *e, *p, *t;
+
     sllist_for_each_safe_prev(results, e, p, t) {
-        struct binary_tree_node_search_result *node = container_of(e, struct binary_tree_node_search_result, list);
+        struct binary_tree_search_result *r = container_of(e, struct binary_tree_search_result, list);
+
         sllist_detach(e, p);
-        free(node);
+        free(r);
     }
 }
 
@@ -783,7 +785,7 @@ binary_tree_integer_match(struct binary_tree_node *node,
 }
 
 static void
-search_binary_tree(struct binary_tree_node *root,
+binary_tree_int_search(struct binary_tree_node *root,
                    int key,
                    struct sllist *result,
                    int limit)
@@ -971,7 +973,7 @@ int main(int argc, char **argv)
     check_binary_tree(&binary_tree_root.root);
 
     {
-        struct binary_tree_node_search_result *r;
+        struct binary_tree_search_result *r;
         struct sllist *e;
         struct bt_node *n;
         unsigned int i;
@@ -981,7 +983,7 @@ int main(int argc, char **argv)
             sllist_init(&values);
 
             gettimeofday(&tb, NULL);
-            search_binary_tree(&binary_tree_root.root, array[i], &values, 1);
+            binary_tree_int_search(&binary_tree_root.root, array[i], &values, 1);
             gettimeofday(&ta, NULL);
 
             usecs += ta.tv_sec*1000000 + ta.tv_usec - tb.tv_sec*1000000 - tb.tv_usec;
@@ -992,7 +994,7 @@ int main(int argc, char **argv)
             }
 
             e = sllist_first(&values);
-            r = container_of(e, struct binary_tree_node_search_result, list);
+            r = container_of(e, struct binary_tree_search_result, list);
             n = container_of(binary_tree_node(r->node), struct bt_node, tree);
             if (n->num != array[i]) {
                 fprintf(stderr, "Found element %u does not match to the search criteria %u\n", n->num, array[i]);
@@ -1014,18 +1016,18 @@ int main(int argc, char **argv)
         sllist_init(&values);
 
         gettimeofday(&tb, NULL);
-        search_binary_tree(&binary_tree_root.root, key, &values, limit);
+        binary_tree_int_search(&binary_tree_root.root, key, &values, limit);
         gettimeofday(&ta, NULL);
 
         if (!sllist_empty(&values)) {
-            struct binary_tree_node_search_result *r;
+            struct binary_tree_search_result *r;
             struct sllist *e;
             struct bt_node *n;
             int count = 0;
 
             sllist_for_each(&values, e) {
                 ++count;
-                r = container_of(e, struct binary_tree_node_search_result, list);
+                r = container_of(e, struct binary_tree_search_result, list);
                 n = container_of(binary_tree_node(r->node), struct bt_node, tree);
                 if (n->num != key) {
                     fprintf(stderr, "Found element %u does not match to the search criteria %u\n", n->num, key);
@@ -1047,7 +1049,7 @@ int main(int argc, char **argv)
     }
 
     {
-        struct binary_tree_node_search_result *r;
+        struct binary_tree_search_result *r;
         struct sllist *e;
         struct bt_node *n;
         unsigned int i;
@@ -1056,7 +1058,7 @@ int main(int argc, char **argv)
         for (i=0;i<pivot;++i) {
             sllist_init(&values);
 
-            search_binary_tree(&binary_tree_root.root, array[i], &values, 1);
+            binary_tree_int_search(&binary_tree_root.root, array[i], &values, 1);
 
             if (sllist_empty(&values)) {
                  fprintf(stderr, "Element %u(%u) was not found\n", i, array[i]);
@@ -1064,7 +1066,7 @@ int main(int argc, char **argv)
             }
 
             e = sllist_first(&values);
-            r = container_of(e, struct binary_tree_node_search_result, list);
+            r = container_of(e, struct binary_tree_search_result, list);
             n = container_of(binary_tree_node(r->node), struct bt_node, tree);
             if (n->num != array[i]) {
                 fprintf(stderr, "Found element %u does not match to the search criteria %u\n", n->num, array[i]);
@@ -1082,7 +1084,7 @@ int main(int argc, char **argv)
         for (i=pivot;i<count;++i) {
             sllist_init(&values);
 
-            search_binary_tree(&binary_tree_root.root, array[i], &values, 1);
+            binary_tree_int_search(&binary_tree_root.root, array[i], &values, 1);
 
             if (sllist_empty(&values)) {
                 fprintf(stderr, "Element %u(%u) was not found\n", i, array[i]);
@@ -1090,7 +1092,7 @@ int main(int argc, char **argv)
             }
 
             e = sllist_first(&values);
-            r = container_of(e, struct binary_tree_node_search_result, list);
+            r = container_of(e, struct binary_tree_search_result, list);
             n = container_of(binary_tree_node(r->node), struct bt_node, tree);
             if (n->num != array[i]) {
                 fprintf(stderr, "Found element %u does not match to the search criteria %u\n", n->num, array[i]);
