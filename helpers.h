@@ -41,6 +41,17 @@ typedef enum {
     cmp_result_greater  = 1
 } cmp_result_t;
 
+static inline const char *
+stringify_cmp_result(cmp_result_t res) {
+    static const char *cmp_result_str[] = {
+        "less",
+        "equal",
+        "greater"
+    };
+
+    return cmp_result_str[res+1];
+}
+
 #define max(a, b) ({                                    \
             typeof(a) __a = (a);                        \
             typeof(b) __b = (b);                        \
