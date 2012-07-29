@@ -35,6 +35,17 @@ int generate_key_value(struct key_value **data,
 void print_key_value(struct key_value *data,
                      int count);
 
+#define __CONCAT_IMPL(x,y)  x##y
+#define CONCAT_IMPL(x,y)    __CONCAT_IMPL(x,y)
+
+#define UNIQUE_NAME_IMPL(name) CONCAT_IMPL(name,__COUNTER__)
+
+#define ALIGN_IMPL(alignment) char UNIQUE_NAME_IMPL(pad)[0] __attribute__((aligned(alignment)))
+
+/* #define L1_CACHE_LINE_SIZE _SC_LEVEL1_DCACHE_LINESIZE */
+#define L1_CACHE_LINE_SIZE  64
+#define L1_ALIGNED          ALIGN_IMPL(L1_CACHE_LINE_SIZE)
+
 typedef enum {
     cmp_result_less     = -1,
     cmp_result_equal    = 0,
