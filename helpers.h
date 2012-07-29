@@ -60,7 +60,7 @@ pswap(void **x, void **y)
 static inline int
 int_sign(int x)
 {
-    return (x > 0) - (x < 0);
+    return (x >> 31) | ((unsigned int)(-x) >> 31);
 }
 
 #define container_of(ptr, type, member)                             \
