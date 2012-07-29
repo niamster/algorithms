@@ -55,13 +55,52 @@ dot_dump_table(FILE *out,
 {
     unsigned long i;
 
-    fprintf(out, "    \"%s\" [\n", label);
+    fprintf(out, "    %s [\n", label);
     fprintf(out, "        label = \"");
     for (i=0;i<size-1;++i) {
         fprintf(out, " <%s_%lu> %lu |", label, i, i);
     }
     fprintf(out, " <%s_%lu> %lu\"\n", label, i, i);
-    fprintf(out, "        shape = \"record\"\n");
+    fprintf(out, "        shape = record\n");
+    fprintf(out, "    ];\n");
+}
+
+void
+dot_dump_record(FILE *out,
+        const char *label,
+        unsigned long id,
+        const char **entries,
+        unsigned long size)
+{
+    unsigned long i;
+
+    fprintf(out, "    %s_%lu [\n", label, id);
+    fprintf(out, "        label = \"");
+    for (i=0;i<size-1;++i)
+        fprintf(out, " <%s_%lu_%lu> %s |", label, id, i, entries[i]);
+    fprintf(out, " <%s_%lu_%lu> %s\"\n", label, id, i, entries[i]);
+    fprintf(out, "        shape = record\n");
+    fprintf(out, "    ];\n");
+}
+
+void
+dot_dump_btree_node(FILE *out,
+        const char *label,
+        unsigned long id,
+        const char **entries,
+        unsigned long order)
+{
+    unsigned long i;
+
+    fprintf(out, "    %s_%lu [\n", label, id);
+    fprintf(out, "        label = \"{{");
+    for (i=0;i<order-2;++i)
+        fprintf(out, " %s |", entries[i]);
+    fprintf(out, " %s } | {", entries[i]);
+    for (i=0;i<order-1;++i)
+        fprintf(out, " <%s_%lu_%lu> |", label, id, i);
+    fprintf(out, " <%s_%lu_%lu> }}\"\n", label, id, i);
+    fprintf(out, "        shape = record\n");
     fprintf(out, "    ];\n");
 }
 
@@ -72,7 +111,7 @@ dot_dump_link_table_to_sllist_head(FILE *out,
         const char *dst_label,
         unsigned long dst_id)
 {
-    fprintf(out, "    \"%s\":%s_%lu -> %s_%lu_0;\n", src_label, src_label, src_id, dst_label, dst_id);
+    fprintf(out, "    %s:%s_%lu -> %s_%lu_0;\n", src_label, src_label, src_id, dst_label, dst_id);
 }
 
 void
@@ -82,7 +121,7 @@ dot_dump_link_table_to_node(FILE *out,
         const char *dst_label,
         unsigned long dst_id)
 {
-    fprintf(out, "    \"%s\":%s_%lu -> %s_%lu;\n", src_label, src_label, src_id, dst_label, dst_id);
+    fprintf(out, "    %s:%s_%lu -> %s_%lu;\n", src_label, src_label, src_id, dst_label, dst_id);
 }
 
 void

@@ -4,6 +4,7 @@ ALGOS	:= sort \
 		binary-search \
 		htable-list htable-tree htable-tree-avl wq \
 		binary-tree binary-tree-avl binary-tree-rb binary-tree-random binary-tree-treap \
+		btree \
 		kalman moving-average alpha-beta alpha-beta-gamma
 LDFLAGS := -lpthread
 
@@ -63,6 +64,9 @@ binary-tree-random: binary_tree.c $(HELPERS)
 
 binary-tree-treap: binary_tree.c $(HELPERS)
 	$(Q)$(CC) $^ -DBINARY_TREE_MAIN -DBINARY_TREE_TREAP -DRANDOM_PREGEN=0xFFFF $(CFLAGS) -o $@ $(LDFLAGS)
+
+btree: btree.c $(HELPERS)
+	$(Q)$(CC) $^ -DBTREE_MAIN $(CFLAGS) -o $@ $(LDFLAGS)
 
 binary-search: binary_search.c qsort.c $(HELPERS)
 	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)

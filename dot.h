@@ -22,6 +22,18 @@ void dot_dump_table(FILE *out,
         const char *label,
         unsigned long size);
 
+void dot_dump_record(FILE *out,
+        const char *label,
+        unsigned long id,
+        const char **entries,
+        unsigned long order);
+
+void dot_dump_bree_node(FILE *out,
+        const char *label,
+        unsigned long id,
+        const char **entries,
+        unsigned long size);
+
 void dot_dump_link_table_to_sllist_head(FILE *out,
         const char *src_label,
         unsigned long src_id,
