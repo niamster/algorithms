@@ -1,6 +1,17 @@
 #ifndef _HELPERS_H_
 #define _HELPERS_H_
 
+#include <unistd.h>
+
+#define ALGO_ASSERT(a, x, d) do {                                       \
+        if (!(x)) {                                                     \
+            fprintf(stderr,                                             \
+                    a ":%s:%d: ASSERT(%s) failed: %s\n",                \
+                    __FILE__, __LINE__, #x, d);                         \
+            _exit(1);                                                   \
+        }                                                               \
+    } while (0)
+
 unsigned int get_random(void);
 
 int generate_array(unsigned int **array,
