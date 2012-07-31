@@ -1,7 +1,17 @@
 #ifndef _BITFIELD_H_
 #define _BITFIELD_H_
 
+#include <limits.h>
+
+#if __WORDSIZE >= 32
+typedef unsigned long bitset_t;
+#elif __WORDSIZE == 16
 typedef unsigned int bitset_t;
+#elif__WORDSIZE == 8
+typedef unsigned char bitset_t;
+#else
+#error Unknown CPU word size
+#endif
 typedef bitset_t bitfield_t [];
 
 #define __BS_SIZE               (sizeof(bitset_t)*8)
@@ -39,5 +49,4 @@ bitfield_get(bitfield_t bf, unsigned int bit)
 {
     return (bf[bit/__BS_SIZE] >> (bit%__BS_SIZE))&1;
 }
-
 #endif
