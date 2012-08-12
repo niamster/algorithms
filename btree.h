@@ -4,7 +4,6 @@
 #include <stdbool.h>
 
 #include "helpers.h"
-#include "bitfield.h"
 #include "sllist.h"
 
 #if !defined(BTREE_ORDER)
@@ -27,7 +26,7 @@ typedef void (*btree_traverse_cbk_t)(struct btree_node *, void *);
 struct btree_node {
     struct btree_node *parent;
     struct btree_node *child[BTREE_ORDER];
-    BITFIELD(valid, BTREE_ORDER-1);
+    unsigned long valid;
     L1_ALIGNED;
     char data[0];
 };

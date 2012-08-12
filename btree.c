@@ -52,33 +52,31 @@ __btree_search(struct btree_root *root,
     n = root->root;
     d = n->data;
   fln: /* find leaf node */
-    for (i=0;i<BTREE_ORDER-1;++i)
-        if (bitfield_get(n->valid, i)) {
-            res = root->cmp(key, d+i*sz);
-            BTREE_DEBUG("i %d, (key=%u) %7s (node->data[%d]=%u)\n",
-                    i, *(unsigned int *)key, stringify_cmp_result(res), i, *(unsigned int *)(d+i*sz));
+    for (i=0;i<n->valid;++i) {
+        res = root->cmp(key, d+i*sz);
+        BTREE_DEBUG("i %d, (key=%u) %7s (node->data[%d]=%u)\n",
+                i, *(unsigned int *)key, stringify_cmp_result(res), i, *(unsigned int *)(d+i*sz));
 
-            if (cmp_result_equal == res) {
+        if (cmp_result_equal == res) {
+            *pos = i;
+            *node = n;
+
+            return true;
+        } else if (cmp_result_less == res) {
+            BTREE_DEBUG("node->child[%d]=%p\n", i, n->child[i]);
+
+            if (BTREE_EMPTY_BRANCH == n->child[i]) {
                 *pos = i;
                 *node = n;
-
-                return true;
-            } else if (cmp_result_less == res) {
-                BTREE_DEBUG("node->child[%d]=%p\n", i, n->child[i]);
-
-                if (BTREE_EMPTY_BRANCH == n->child[i]) {
-                    *pos = i;
-                    *node = n;
-                    return false;
-                }
-
-                n = n->child[i];
-                d = n->data;
-
-                goto fln;
+                return false;
             }
-        } else
-            break;
+
+            n = n->child[i];
+            d = n->data;
+
+            goto fln;
+        }
+    }
 
     BTREE_DEBUG("node->child[%d]=%p\n", i, n->child[i]);
     if (BTREE_EMPTY_BRANCH == n->child[i]) {
@@ -107,7 +105,7 @@ btree_add(struct btree_root *root, void *data)
         if (BTREE_EMPTY_BRANCH == n)
             return BTREE_ADD_ALLOC;
 
-        bitfield_set_one(n->valid, 0);
+        n->valid = 1;
         root->assign(n->data, data);
 
         root->root = n;
@@ -122,40 +120,40 @@ btree_add(struct btree_root *root, void *data)
 
   add:
     BTREE_DEBUG("add %u\n", *(unsigned int *)data);
-    for (i=0;i<BTREE_ORDER-1;++i)
-        if (!bitfield_get(n->valid, i)) {
-            bitfield_set_one(n->valid, i);
+    if (n->valid < BTREE_ORDER-1) {
+        i = n->valid;
+        ++n->valid;
 
-            for (j=0;j<i;++j) {
-                res = root->cmp(data, d+j*sz);
-                if (cmp_result_less == res) {
-                    __btree_move(root, n, j+1, j, i-j);
+        for (j=0;j<i;++j) {
+            res = root->cmp(data, d+j*sz);
+            if (cmp_result_less == res) {
+                __btree_move(root, n, j+1, j, i-j);
 
-                    break;
-                }
+                break;
             }
-
-            if (j != i && BTREE_EMPTY_BRANCH == nn) {
-                if (BTREE_EMPTY_BRANCH != n->child[j+1])
-                    BTREE_DEBUG("i %d, j %d, nn %p, n->child[j+1] %p\n", i, j, nn, n->child[j+1]);
-                BTREE_ASSERT(BTREE_EMPTY_BRANCH == n->child[j+1], "inserting key with right child while old key didn't have one");
-            }
-
-
-            root->assign(d+j*sz, data);
-            if (BTREE_EMPTY_BRANCH != nn) {
-                BTREE_DEBUG("i %d, j %d, nn %p, n->child[j+1] %p, nn->data[0] %u\n",
-                        i, j, nn, n->child[j+1], *(unsigned int *)nn->data);
-                if (BTREE_ORDER == j+1)
-                    BTREE_ASSERT(BTREE_EMPTY_BRANCH == n->child[j+1], "appending key in the end with right child while last child is present");
-                else
-                    memmove(&n->child[j+2], &n->child[j+1], (i-j)*sizeof(struct btree_node *));
-                n->child[j+1] = nn;
-                nn->parent = n;
-            }
-
-            return BTREE_ADD_SUCCESS;
         }
+
+        if (j != i && BTREE_EMPTY_BRANCH == nn) {
+            if (BTREE_EMPTY_BRANCH != n->child[j+1])
+                BTREE_DEBUG("i %d, j %d, nn %p, n->child[j+1] %p\n", i, j, nn, n->child[j+1]);
+            BTREE_ASSERT(BTREE_EMPTY_BRANCH == n->child[j+1], "inserting key with right child while old key didn't have one");
+        }
+
+
+        root->assign(d+j*sz, data);
+        if (BTREE_EMPTY_BRANCH != nn) {
+            BTREE_DEBUG("i %d, j %d, nn %p, n->child[j+1] %p, nn->data[0] %u\n",
+                    i, j, nn, n->child[j+1], *(unsigned int *)nn->data);
+            if (BTREE_ORDER == j+1)
+                BTREE_ASSERT(BTREE_EMPTY_BRANCH == n->child[j+1], "appending key in the end with right child while last child is present");
+            else
+                memmove(&n->child[j+2], &n->child[j+1], (i-j)*sizeof(struct btree_node *));
+            n->child[j+1] = nn;
+            nn->parent = n;
+        }
+
+        return BTREE_ADD_SUCCESS;
+    }
 
     /* not enough space to store single entry
        split the node and push new median entry(possibly with right child) up
@@ -230,25 +228,27 @@ btree_add(struct btree_root *root, void *data)
 
         i = BTREE_ORDER/2;
         if (pos <= BTREE_ORDER/2) {
+            new->valid += BTREE_ORDER-BTREE_ORDER/2-1;
+            n->valid -= BTREE_ORDER-BTREE_ORDER/2-1;
             for (j=0;j<BTREE_ORDER-BTREE_ORDER/2-1;++j,++i) {
                 BTREE_DEBUG("d.1: i %d, j %d, d %u\n", i, j, *(unsigned int *)(d+i*sz));
-                bitfield_set_one(new->valid, j);
-                bitfield_set_zero(n->valid, i);
                 root->assign((char *)new->data+j*sz, d+i*sz);
             }
         } else {
             unsigned int k;
             ++i;
 
+            new->valid += BTREE_ORDER-BTREE_ORDER/2-1;
+            if (pos < BTREE_ORDER-BTREE_ORDER/2-1)
+                n->valid -= BTREE_ORDER-BTREE_ORDER/2-2;
+            else
+                n->valid -= BTREE_ORDER-BTREE_ORDER/2-1;
             for (k=i,j=0;j<BTREE_ORDER-BTREE_ORDER/2-1;++j,++k) {
                 BTREE_DEBUG("d.2: i %d, j %d, k %d, d %u\n", i, j, k, *(unsigned int *)(i == pos?data:(d+i*sz)));
-                bitfield_set_one(new->valid, j);
                 if (k == pos)
                     root->assign((char *)new->data+j*sz, data);
-                else {
-                    bitfield_set_zero(n->valid, i);
+                else
                     root->assign((char *)new->data+j*sz, d+i*sz), ++i;
-                }
             }
         }
 
@@ -257,10 +257,8 @@ btree_add(struct btree_root *root, void *data)
             root->assign(d+pos*sz, data);
         }
 
-        if (BTREE_ORDER/2 != pos) {
-            bitfield_set_zero(n->valid, BTREE_ORDER/2);
+        if (BTREE_ORDER/2 != pos)
             data = d+(BTREE_ORDER/2)*sz;
-        }
 
         if (BTREE_EMPTY_BRANCH != n->parent) {
             BTREE_DEBUG("n->p->data[0] %u\n", *(unsigned int *)n->parent->data);
@@ -280,7 +278,7 @@ btree_add(struct btree_root *root, void *data)
             nr->child[1] = new;
             new->parent = nr;
 
-            bitfield_set_one(nr->valid, 0);
+            nr->valid = 1;
             root->assign(nr->data, data);
 
             root->root = nr;
@@ -308,10 +306,7 @@ btree_remove(struct btree_root *root, void *data)
 
     if (BTREE_EMPTY_BRANCH == n->child[0]) {
       leaf:
-        for (i=0;i<BTREE_ORDER-1;++i)
-            if (!bitfield_get(n->valid, i))
-                break;
-        --i;
+        i = n->valid - 1;
 
         if (0 == i) { /* last entry in the node */
             struct btree_node *p = n->parent;
@@ -333,7 +328,7 @@ btree_remove(struct btree_root *root, void *data)
 
             root->free(n);
         } else {
-            bitfield_set_zero(n->valid, i);
+            --n->valid;
 
             if (pos != i)
                 __btree_move(root, n, pos, pos+1, i-pos);
@@ -368,20 +363,17 @@ btree_remove(struct btree_root *root, void *data)
 
                 if (BTREE_ORDER-1 != j && BTREE_EMPTY_BRANCH != p->child[j+1]) { /* pop element from right sibling? */
                     nn = p->child[j+1];
-
-                    for (r=0;r<BTREE_ORDER-1;++r)
-                        if (!bitfield_get(nn->valid, r))
-                            break;
+                    r = nn->valid;
 
                     BTREE_DEBUG("right sibling(with nn->data[0]=%u) population: %u\n", *(unsigned int *)nn->data, r);
 
                     if (r > BTREE_ORDER/2) {
                         BTREE_DEBUG("divisor(%u)=%u\n", j, *(unsigned int *)(p->data+j*sz));
 
-                        bitfield_set_one(n->valid, i);
+                        ++n->valid;
                         root->assign(n->data+i*sz, p->data+j*sz);
                         root->assign(p->data+j*sz, nn->data);
-                        bitfield_set_zero(nn->valid, r-1);
+                        --nn->valid;
                         __btree_move(root, nn, 0, 1, r-1);
 
                         if (BTREE_EMPTY_BRANCH != nn->child[0]) {
@@ -406,21 +398,18 @@ btree_remove(struct btree_root *root, void *data)
                     BTREE_ASSERT(BTREE_EMPTY_BRANCH != p->child[j-1], "no child on the left");
 
                     nn = p->child[j-1];
-
-                    for (l=0;l<BTREE_ORDER-1;++l)
-                        if (!bitfield_get(nn->valid, l))
-                            break;
+                    l = nn->valid;
 
                     BTREE_DEBUG("left sibling(with nn->data[0]=%u) population: %u\n", *(unsigned int *)nn->data, l);
 
                     if (l > BTREE_ORDER/2) {
                         BTREE_DEBUG("divisor=%u\n", *(unsigned int *)(p->data+(j-1)*sz));
 
-                        bitfield_set_one(n->valid, i);
+                        ++n->valid;
                         __btree_move(root, n, 1, 0, i);
                         root->assign(n->data, p->data+(j-1)*sz);
                         root->assign(p->data+(j-1)*sz, nn->data+(l-1)*sz);
-                        bitfield_set_zero(nn->valid, l-1);
+                        --nn->valid;
 
                         if (BTREE_EMPTY_BRANCH != nn->child[l]) {
                             for (j=1;j<BTREE_ORDER;++j)
@@ -447,7 +436,7 @@ btree_remove(struct btree_root *root, void *data)
 
                     nn = p->child[j+1];
 
-                    bitfield_set_one(n->valid, i);
+                    ++n->valid;
                     root->assign(n->data+i*sz, p->data+j*sz);
                     for (k=j+2;k<BTREE_ORDER;++k)
                         if (BTREE_EMPTY_BRANCH == p->child[k])
@@ -457,17 +446,14 @@ btree_remove(struct btree_root *root, void *data)
                     if (j != k-1)
                         memmove(&p->child[j+1], &p->child[j+2], (k-j)*sizeof(struct btree_node *));
                     p->child[k] = BTREE_EMPTY_BRANCH;
-                    for (k=0;k<BTREE_ORDER-1;++k)
-                        if (!bitfield_get(p->valid, k))
-                            break;
-                    --k;
+                    k = p->valid - 1;
                     pi = k;
                     BTREE_DEBUG("2: k %d, j %d\n", k, j);
-                    bitfield_set_zero(p->valid, k);
+                    --p->valid;
                     __btree_move(root, p, j, j+1, k-j);
 
                     for (k=0,++i;k<r;++k,++i) {
-                        bitfield_set_one(n->valid, i);
+                        ++n->valid;
                         root->assign(n->data+i*sz, nn->data+k*sz);
                     }
 
@@ -505,7 +491,7 @@ btree_remove(struct btree_root *root, void *data)
 
                     nn = p->child[j-1];
 
-                    bitfield_set_one(nn->valid, l);
+                    ++nn->valid;
                     root->assign(nn->data+l*sz, p->data+(j-1)*sz);
                     for (k=j;k<BTREE_ORDER;++k)
                         if (BTREE_EMPTY_BRANCH == p->child[k])
@@ -514,18 +500,15 @@ btree_remove(struct btree_root *root, void *data)
                     if (j != k-1)
                         memmove(&p->child[j], &p->child[j+1], (k-j)*sizeof(struct btree_node *));
                     p->child[k-1] = BTREE_EMPTY_BRANCH;
-                    for (k=0;k<BTREE_ORDER-1;++k)
-                        if (!bitfield_get(p->valid, k))
-                            break;
-                    --k;
+                    k = p->valid - 1;
                     pi = k;
                     BTREE_DEBUG("4: k %d, j %d\n", k, j);
-                    bitfield_set_zero(p->valid, k);
+                    --p->valid;
                     if (k > j)
                         __btree_move(root, p, j-1, j, k-j);
 
                     for (k=0,++l;k<i;++k,++l) {
-                        bitfield_set_one(nn->valid, l);
+                        ++nn->valid;
                         root->assign(nn->data+l*sz, n->data+k*sz);
                     }
 
@@ -581,10 +564,7 @@ btree_remove(struct btree_root *root, void *data)
 
         BTREE_DEBUG("target leaf with nn->data[0]=%u\n", *(unsigned int *)nn->data);
 
-        for (i=0;i<BTREE_ORDER-1;++i)
-            if (!bitfield_get(nn->valid, i))
-                break;
-        --i;
+        i = nn->valid - 1;
 
         BTREE_DEBUG("moving %u(%u) to %u(%u)\n", *(unsigned int *)(nn->data+i*sz), i, *(unsigned int *)(n->data+pos*sz), pos);
 
@@ -711,7 +691,7 @@ __dump_btree_graph(struct btree_node *root,
 
         memset(entries[i], 0x0, sizeof(entries[0]));
 
-        if (!bitfield_get(root->valid, i))
+        if (i >= root->valid)
             sprintf(entries[i], "%s", "-");
         else
             sprintf(entries[i], "%u.%u", d->n, d->i);
@@ -751,10 +731,7 @@ dump_btree_node(struct btree_node *node, void *data)
     unsigned int i;
     struct btree_el *d;
 
-    for (i=0;i<BTREE_ORDER-1;++i) {
-        if (!bitfield_get(node->valid, i))
-            continue;
-
+    for (i=0;i<node->valid;++i) {
         d = (struct btree_el *)((char *)node->data + i*sizeof(struct btree_el));
         printf("%u.%u ", d->n, d->i);
     }
