@@ -2,6 +2,7 @@
 #define _HELPERS_H_
 
 #include <unistd.h>
+#include <stdio.h>
 
 #define ALGO_ASSERT(a, x, d) do {                                       \
         if (!(x)) {                                                     \

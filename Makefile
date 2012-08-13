@@ -5,6 +5,7 @@ ALGOS	:= sort \
 		htable-list htable-tree htable-tree-avl wq \
 		binary-tree binary-tree-avl binary-tree-rb binary-tree-random binary-tree-treap \
 		btree \
+		bitfield \
 		kalman moving-average alpha-beta alpha-beta-gamma
 LDFLAGS := -lpthread
 
@@ -73,6 +74,9 @@ binary-search: binary_search.c qsort.c $(HELPERS)
 
 wq: workqueue.c notification.c $(HELPERS)
 	$(Q)$(CC) -DWORKQUEUE_MAIN $^ $(CFLAGS) -o $@ $(LDFLAGS)
+
+bitfield: bitfield.h bitfield.c $(HELPERS)
+	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
 kalman: kalman.c $(HELPERS)
 	$(Q)$(CC) -DKALMAN_MAIN $^ $(CFLAGS) -o $@ $(LDFLAGS)
@@ -245,6 +249,10 @@ test-binary-search: binary-search
 test-wq: wq
 	$(Q)echo "wq"
 	$(Q)./wq -t 5 -w 100 $(RFLAGS)
+
+test-bitfield: bitfield
+	$(Q)echo "bitfield"
+	$(Q)./bitfield $(RFLAGS)
 
 test-kalman: kalman
 	$(Q)mkdir -p $(OUT_DIR)
