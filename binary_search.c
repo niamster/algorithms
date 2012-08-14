@@ -33,6 +33,24 @@ binary_search(unsigned int *array,
 	return -1;
 }
 
+static void
+uint_assign(void *a, void *b)
+{
+    *(unsigned int *)a = *(unsigned int *)b;
+}
+
+static void
+uint_swap(void *a, void *b)
+{
+    swap((unsigned int *)a, (unsigned int *)b);
+}
+
+static cmp_result_t
+uint_cmp(void *a, void *b)
+{
+    return (cmp_result_t)int_sign(*(unsigned int *)a - *(unsigned int *)b);
+}
+
 int
 usage(const char *prog)
 {
@@ -80,7 +98,7 @@ int main(int argc, char **argv)
         print_array(array, count);
     }
 
-    quick_sort1(array, count);
+    quick_sort1(array, count, sizeof(unsigned int), uint_assign, uint_swap, uint_cmp);
 
     if (dump) {
         printf("\nSorted array:\n");

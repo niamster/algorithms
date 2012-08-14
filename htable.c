@@ -88,7 +88,7 @@ print_htable_binary_tree_search_result(struct sllist *head)
     struct sllist *e;
 
     sllist_for_each(head, e) {
-        struct binary_tree_node_search_result *sr = container_of(e, struct binary_tree_node_search_result, list);
+        struct binary_tree_search_result *sr = container_of(e, struct binary_tree_search_result, list);
         struct hash_node *node = container_of(sr->node, struct hash_node, tree);
         printf("    '%s' => '%s'\n", node->data->key, node->data->value);
     }
