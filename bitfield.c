@@ -5,8 +5,16 @@
 
 #include "bitfield.h"
 
+struct s {
+    EMBEDDED_BITFIELD(bf, 10);
+};
+
+BITFIELD(bf, 1);
+
 int main(int argc, char **argv)
 {
+    struct s s;
+    EMBEDDED_BITFIELD_INITIALIZE(&s, bf, 10);
     BITFIELD(bf0, 1);
     BITFIELD(bf1, 128);
     BITFIELD(bf2, 24);
@@ -15,6 +23,12 @@ int main(int argc, char **argv)
 
     BITFIELD_ASSERT(bf3, "unable to allocate bitfield on heap");
     BITFIELD_ASSERT(bf4, "unable to allocate bitfield on heap");
+
+    bitfield_set_one(bf, 0);
+    BITFIELD_ASSERT(bitfield_get(bf, 0), "bit.0 is low");
+
+    bitfield_set_one(s.bf, 0);
+    BITFIELD_ASSERT(bitfield_get(s.bf, 0), "bit.0 is low");
 
     bitfield_set_one(bf0, 0);
     BITFIELD_ASSERT(bitfield_get(bf0, 0), "bit.0 is low");

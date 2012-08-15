@@ -49,14 +49,33 @@ struct bitfield {
 typedef struct bitfield * bitfield_t;
 
 #define __BS_SIZE               (sizeof(bitset_t)*8)
-#define __BF_SIZE(size)         ((size)/__BS_SIZE + ((size)%__BS_SIZE?1:0))
+#define __BF_SIZE(sz)           ((sz)/__BS_SIZE + ((sz)%__BS_SIZE?1:0))
 
-#define BITFIELD(name, size)                                \
-    struct ________________ ## name {                       \
+#define EMBEDDED_BITFIELD(name, sz)                         \
+    struct {                                                \
         word_t ____________ ## name;                        \
-        bitset_t ________ ## name[__BF_SIZE(size)];         \
-    } ________________ ## name = {size};                    \
+        bitset_t ________ ## name[__BF_SIZE(sz)];           \
+    } ________ ## name;                                     \
+    bitfield_t name
+
+#define EMBEDDED_BITFIELD_INITIALIZE(container, name, sz) do {          \
+        (container)->name = (bitfield_t)&(container)->________ ## name; \
+        (container)->name->size = (sz);                                 \
+    } while (0)
+
+#define BITFIELD(name, sz)                                  \
+    struct {                                                \
+        word_t ____________ ## name;                        \
+        bitset_t ________ ## name[__BF_SIZE(sz)];           \
+    } ________________ ## name = {sz};                      \
     bitfield_t name = (bitfield_t)&________________ ## name
+
+#define STATIC_BITFIELD(name, sz)                           \
+    static struct {                                         \
+        word_t ____________ ## name;                        \
+        bitset_t ________ ## name[__BF_SIZE(sz)];           \
+    } ________________ ## name = {sz};                      \
+    static bitfield_t name = (bitfield_t)&________________ ## name
 
 #define __bitfield_bounds_test(call, bf, bit, ...) ({               \
             BITFIELD_ASSERT((bit) < (bf)->size, "bounds breach");   \
