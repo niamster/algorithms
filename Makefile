@@ -6,6 +6,7 @@ ALGOS	:= sort \
 		binary-tree binary-tree-avl binary-tree-rb binary-tree-random binary-tree-treap \
 		btree \
 		bitfield \
+		heap \
 		kalman moving-average alpha-beta alpha-beta-gamma
 LDFLAGS := -lpthread
 
@@ -76,6 +77,9 @@ wq: workqueue.c notification.c $(HELPERS)
 	$(Q)$(CC) -DWORKQUEUE_MAIN $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
 bitfield: bitfield.h bitfield.c $(HELPERS)
+	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
+
+heap: heap.h heap.c hsort.c $(HELPERS)
 	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
 kalman: kalman.c $(HELPERS)
@@ -253,6 +257,14 @@ test-wq: wq
 test-bitfield: bitfield
 	$(Q)echo "bitfield"
 	$(Q)./bitfield $(RFLAGS)
+
+test-heap: heap
+	$(Q)mkdir -p $(OUT_DIR)
+
+	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $(OUT_DIR)/$@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$(OUT_DIR)/$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
+
+	$(Q)echo "heap"
+	$(Q)./heap -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
 
 test-kalman: kalman
 	$(Q)mkdir -p $(OUT_DIR)
