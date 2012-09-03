@@ -28,6 +28,8 @@ OUT_DIR	:= /tmp/algos
 
 ifeq ($(DEBUG), 1)
 CFLAGS := -O0 -g -DDEBUG=1
+else
+CFLAGS += -flto -fwhole-program
 endif
 
 ifeq ($(MAKE_VERBOSE), 1)
