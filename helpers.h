@@ -13,6 +13,8 @@
         }                                                               \
     } while (0)
 
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+
 unsigned int get_random(void);
 
 int generate_array(unsigned int **array,

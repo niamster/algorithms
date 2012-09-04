@@ -12,13 +12,20 @@
 #include "qsort.h"
 #include "hsort.h"
 #include "msort.h"
+#include "ssort.h"
 
 enum sort_variant {
     sort_variant_qs1,
     sort_variant_qs2,
+
     sort_variant_hs,
+
     sort_variant_ms1,
     sort_variant_ms2,
+
+    sort_variant_ss1,
+    sort_variant_ss2,
+    sort_variant_ss3,
 };
 
 enum torture_step {
@@ -51,7 +58,7 @@ static int
 usage(const char *prog)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "%s --sort-variant|-s QS1|QS2|HS|MS1|MS2 [--threads|-t <num>] [--input-data|-i <path>] [--count|-c <num>] [--output-data|-o <path>] [--dump]\n", prog);
+    fprintf(stderr, "%s --sort-variant|-s QS1|QS2|HS|MS1|MS2|SS1|SS2|SS3 [--threads|-t <num>] [--input-data|-i <path>] [--count|-c <num>] [--output-data|-o <path>] [--dump]\n", prog);
     return 1;
 }
 
@@ -92,6 +99,12 @@ int main(unsigned int argc, char **argv)
                     sort_variant = sort_variant_ms1;
                 else if (!strncmp(optarg, "MS2", 3))
                     sort_variant = sort_variant_ms2;
+                else if (!strncmp(optarg, "SS1", 3))
+                    sort_variant = sort_variant_ss1;
+                else if (!strncmp(optarg, "SS2", 3))
+                    sort_variant = sort_variant_ss2;
+                else if (!strncmp(optarg, "SS3", 3))
+                    sort_variant = sort_variant_ss3;
                 else
                     return usage(argv[0]);
                 break;
@@ -207,6 +220,24 @@ int main(unsigned int argc, char **argv)
             case sort_variant_ms2:
                 gettimeofday(&tb, NULL);
                 merge_sort2(array, count, sizeof(unsigned int), uint_assign, uint_swap, uint_cmp);
+                gettimeofday(&ta, NULL);
+                break;
+
+            case sort_variant_ss1:
+                gettimeofday(&tb, NULL);
+                shell_sort(array, count, sizeof(unsigned int), uint_assign, uint_swap, uint_cmp, SSORT_GAP_SHELL);
+                gettimeofday(&ta, NULL);
+                break;
+
+            case sort_variant_ss2:
+                gettimeofday(&tb, NULL);
+                shell_sort(array, count, sizeof(unsigned int), uint_assign, uint_swap, uint_cmp, SSORT_GAP_FL);
+                gettimeofday(&ta, NULL);
+                break;
+
+            case sort_variant_ss3:
+                gettimeofday(&tb, NULL);
+                shell_sort(array, count, sizeof(unsigned int), uint_assign, uint_swap, uint_cmp, SSORT_GAP_C);
                 gettimeofday(&ta, NULL);
                 break;
         }
