@@ -65,35 +65,23 @@ __shell_sort(void *array,
         ssort_gap gg)
 {
     unsigned int k, g;
-    unsigned int a, b, c;
+    unsigned int a, b;
+    unsigned int t[size/sizeof(unsigned int)+1];
 
     for (k=1;;++k) {
         g = gg(count, k);
 
-        for (a=0;a<g;++a) {
-            for (b=g+a;b<count;b+=g) {
-#if 1 // faster on x86_64
-                unsigned int t[size/sizeof(unsigned int)+1];
+        for (a=g;a<count;++a) {
+            assign(t, array+size*a);
 
-                assign(t, array+size*b);
+            for (b=a;b>=g;b-=g) {
+                if (cmp(array+size*(b-g), t) == cmp_result_less)
+                    break;
 
-                for (c=b;c>=g;c-=g) {
-                    if (cmp(array+size*(c-g), t) == cmp_result_less)
-                        break;
-
-                    assign(array+size*c, array+size*(c-g));
-                }
-
-                assign(array+size*c, t);
-#else
-                for (c=b;c>=g;c-=g) {
-                    if (cmp(array+size*(c-g), array+size*c) == cmp_result_less)
-                        break;
-
-                    swp(array+size*(c-g), array+size*c);
-                }
-#endif
+                assign(array+size*b, array+size*(b-g));
             }
+
+            assign(array+size*b, t);
         }
 
         if (1 == g)
