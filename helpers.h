@@ -71,7 +71,10 @@ stringify_cmp_result(cmp_result_t res) {
             typeof(b) __b = (b);                        \
             __a > __b?__a:__b;})
 
-#define min(a, b) max(b, a)
+#define min(a, b) ({                                    \
+            typeof(a) __a = (a);                        \
+            typeof(b) __b = (b);                        \
+            __a < __b?__a:__b;})
 
 static inline void
 swap(unsigned int *x, unsigned int *y)
