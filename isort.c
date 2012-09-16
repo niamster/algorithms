@@ -21,7 +21,7 @@ void insertion_sort(void *array,
     int i, j;
     unsigned int t[size/sizeof(unsigned int)+1];
     
-    if (1 == count)
+    if (count <= 1)
         return;
 
     if (2 == count) {

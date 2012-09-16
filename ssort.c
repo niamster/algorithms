@@ -99,7 +99,7 @@ void shell_sort(void *array,
 {
     ssort_gap g;
 
-    if (1 == count)
+    if (count <= 1)
         return;
 
     if (2 == count) {
