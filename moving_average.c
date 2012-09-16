@@ -22,7 +22,7 @@ int moving_average_filter_init(struct moving_average_filter_state *state)
 
     state->b = malloc(state->P * sizeof(double));
     if (!state->b) {
-        fprintf(stderr, "Error error allocating %d bytes: %s", state->P * sizeof(double), strerror(errno));
+        fprintf(stderr, "Error allocating %d bytes: %s", state->P * sizeof(double), strerror(errno));
         return -1;
     }
 
@@ -35,7 +35,7 @@ int moving_average_filter_init(struct moving_average_filter_state *state)
 
     state->samples = calloc(state->P, sizeof(double));
     if (!state->samples) {
-        fprintf(stderr, "Error error allocating %d bytes: %s", state->P * sizeof(double), strerror(errno));
+        fprintf(stderr, "Error allocating %d bytes: %s", state->P * sizeof(double), strerror(errno));
         free(state->b);
         return -1;
     }
@@ -169,7 +169,7 @@ int main(int argc, char **argv)
             int n;
             n = snprintf(b, sizeof(b), "%d %d %d\n", i, array_in[i], array_out[i]);
             if (write(d, b, n) == -1) {
-                fprintf(stderr, "Error error writing to %s: %s", output_data, strerror(errno));
+                fprintf(stderr, "Error writing to %s: %s", output_data, strerror(errno));
                 break;
             }
         }

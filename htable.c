@@ -222,12 +222,12 @@ construct_htable(struct key_value *data,
 
 #if defined(HTABLE_LIST)
     if (!(hash_table->table = malloc(hash_size*sizeof(struct sllist)))) {
-        fprintf(stderr, "Error error allocating %d bytes: %s", hash_size*sizeof(struct sllist), strerror(errno));
+        fprintf(stderr, "Error allocating %d bytes: %s", hash_size*sizeof(struct sllist), strerror(errno));
         return -1;
     }
 #elif defined(HTABLE_TREE)
     if (!(hash_table->table = malloc(hash_size*sizeof(struct binary_tree_node)))) {
-        fprintf(stderr, "Error error allocating %d bytes: %s", hash_size*sizeof(struct binary_tree_node), strerror(errno));
+        fprintf(stderr, "Error allocating %d bytes: %s", hash_size*sizeof(struct binary_tree_node), strerror(errno));
         return -1;
     }
 #endif
@@ -245,7 +245,7 @@ construct_htable(struct key_value *data,
     }
 
     if (!(*pool = malloc(count*sizeof(struct hash_node)))) {
-        fprintf(stderr, "Error error allocating %d bytes: %s", count*sizeof(struct hash_node), strerror(errno));
+        fprintf(stderr, "Error allocating %d bytes: %s", count*sizeof(struct hash_node), strerror(errno));
         return -1;
     }
 
@@ -361,7 +361,7 @@ search_htable(struct hash_table *hash_table,
         }
 
         if (!(needle = malloc(sizeof(struct hash_node)))) {
-            fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct hash_node), strerror(errno));
+            fprintf(stderr, "Error allocating %d bytes: %s", sizeof(struct hash_node), strerror(errno));
             break;
         }
         needle->data = node->data;

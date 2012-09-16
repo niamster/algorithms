@@ -312,7 +312,7 @@ int main(unsigned int argc, char **argv)
                     }
                     ftruncate(d, 0);
                     if (write(d, array, count*sizeof(unsigned int)) == -1)
-                        fprintf(stderr, "Error error writing to %s: %s", output_data, strerror(errno));
+                        fprintf(stderr, "Error writing to %s: %s", output_data, strerror(errno));
                     close(d);
                 }
                 break;

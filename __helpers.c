@@ -35,13 +35,13 @@ get_random(void)
     const char *path = "/dev/urandom";
 
     if ((v = open(path, O_RDONLY)) == -1) {
-        fprintf(stderr, "Error error opening to %s: %s", path, strerror(errno));
+        fprintf(stderr, "Error opening to %s: %s", path, strerror(errno));
         return -1;
     }
 
     if (read(v, &r, sizeof(unsigned int)) < sizeof(unsigned int)) {
         close(v);
-        fprintf(stderr, "Error error reading %d bytes from %s: %s", sizeof(unsigned int), path, strerror(errno));
+        fprintf(stderr, "Error reading %d bytes from %s: %s", sizeof(unsigned int), path, strerror(errno));
         return -1;
     }
     close(v);
@@ -58,24 +58,24 @@ generate_array(unsigned int **array,
 {
     int v;
     if ((v = open(path, O_RDONLY)) == -1) {
-        fprintf(stderr, "Error error opening to %s: %s", path, strerror(errno));
+        fprintf(stderr, "Error opening to %s: %s", path, strerror(errno));
         return -1;
     }
     if (*count == 0) {
         struct stat s;
         if (fstat(v, &s) == -1) {
-            fprintf(stderr, "Error error getting information about %s: %s", path, strerror(errno));
+            fprintf(stderr, "Error getting information about %s: %s", path, strerror(errno));
             return -1;
         }
         *count = s.st_size/sizeof(unsigned int);
     }
     if (!(*array = malloc(*count*sizeof(unsigned int)))) {
-        fprintf(stderr, "Error error allocating %d bytes: %s", *count*sizeof(unsigned int), strerror(errno));
+        fprintf(stderr, "Error allocating %d bytes: %s", *count*sizeof(unsigned int), strerror(errno));
         close(v);
         return -1;
     }
     if (read(v, *array, *count*sizeof(unsigned int)) < *count*sizeof(unsigned int)) {
-        fprintf(stderr, "Error error reading %d bytes from %s: %s", *count*sizeof(unsigned int), path, strerror(errno));
+        fprintf(stderr, "Error reading %d bytes from %s: %s", *count*sizeof(unsigned int), path, strerror(errno));
         close(v);
         return -1;
     }
@@ -109,25 +109,25 @@ generate_key_value(struct key_value **data,
 {
     int v;
     if ((v = open(path, O_RDONLY)) == -1) {
-        fprintf(stderr, "Error error opening to %s: %s", path, strerror(errno));
+        fprintf(stderr, "Error opening to %s: %s", path, strerror(errno));
         return -1;
     }
     if (*count == 0) {
         struct stat s;
         if (fstat(v, &s) == -1) {
-            fprintf(stderr, "Error error getting information about %s: %s", path, strerror(errno));
+            fprintf(stderr, "Error getting information about %s: %s", path, strerror(errno));
             close(v);
             return -1;
         }
         *count = s.st_size/sizeof(struct key_value);
     }
     if (!(*data = malloc(*count*sizeof(struct key_value)))) {
-        fprintf(stderr, "Error error allocating %d bytes: %s", *count*sizeof(struct key_value), strerror(errno));
+        fprintf(stderr, "Error allocating %d bytes: %s", *count*sizeof(struct key_value), strerror(errno));
         close(v);
         return -1;
     }
     if (read(v, *data, *count*sizeof(struct key_value)) < *count*sizeof(struct key_value)) {
-        fprintf(stderr, "Error error reading %d bytes from %s: %s", *count*sizeof(struct key_value), path, strerror(errno));
+        fprintf(stderr, "Error reading %d bytes from %s: %s", *count*sizeof(struct key_value), path, strerror(errno));
         close(v);
         return -1;
     }

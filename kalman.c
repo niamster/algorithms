@@ -152,7 +152,7 @@ int main(int argc, char **argv)
             int n;
             n = snprintf(b, sizeof(b), "%d %d %d\n", i, array_in[i], array_out[i]);
             if (write(d, b, n) == -1) {
-                fprintf(stderr, "Error error writing to %s: %s", output_data, strerror(errno));
+                fprintf(stderr, "Error writing to %s: %s", output_data, strerror(errno));
                 break;
             }
         }

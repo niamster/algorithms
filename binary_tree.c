@@ -398,7 +398,7 @@ __binary_tree_search(struct binary_tree_node *root,
 
         if (res == cmp_result_equal) {
             if (!(result = malloc(sizeof(struct binary_tree_search_result)))) {
-                fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct binary_tree_search_result), strerror(errno));
+                fprintf(stderr, "Error allocating %d bytes: %s", sizeof(struct binary_tree_search_result), strerror(errno));
                 break;
             }
 
@@ -725,7 +725,7 @@ construct_binary_tree(int *array,
     binary_tree_init_root(root);
 
     if (!(*pool = malloc(count*sizeof(struct bt_node)))) {
-        fprintf(stderr, "Error error allocating %d bytes: %s", sizeof(struct bt_node), strerror(errno));
+        fprintf(stderr, "Error allocating %d bytes: %s", sizeof(struct bt_node), strerror(errno));
         return -1;
     }
 
