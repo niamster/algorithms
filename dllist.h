@@ -32,7 +32,15 @@ struct dllist {
         (e)->next->prev = (e)->prev;            \
     } while (0)
 
-#define dllist_add_tail(head, list)             \
+#define dllist_add(head, e)                     \
+    do {                                        \
+        (head)->next->prev = (e);               \
+        (e)->next = (head)->next;               \
+        (e)->prev = (head);                     \
+        (head)->next = (e);                     \
+    } while (0)
+
+#define dllist_add_tail(head, e)                \
     do {                                        \
         (head)->prev->next = (e);               \
         (e)->prev = (head)->prev;               \
