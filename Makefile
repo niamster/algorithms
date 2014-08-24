@@ -42,7 +42,7 @@ HELPERS = __helpers.c dot.c
 
 all: $(ALGOS)
 
-sort: sort.c qsort.c hsort.c msort.c ssort.c isort.c $(HELPERS)
+sort: sort.c qsort.c hsort.c msort.c ssort.c isort.c tsort.c $(HELPERS)
 	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
 htable-list: htable.c $(HELPERS)
@@ -168,6 +168,15 @@ test-isort: sort
 	$(Q)./sort -s IS -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
 	$(Q)echo "==========================================="
 
+test-tsort: sort
+	$(Q)mkdir -p $(OUT_DIR)
+
+	$(Q)if test "$(TST_REGEN_RND)" = "yes" -o ! -f $(OUT_DIR)/$@.$(TST_RND_CNT).rnd; then dd if=/dev/urandom of=$(OUT_DIR)/$@.$(TST_RND_CNT).rnd bs=$(TST_RND_CNT) count=4 status=noxfer >/dev/null 2>&1; fi
+
+	$(Q)echo "tsort"
+	$(Q)./sort -s TS -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
+	$(Q)echo "==========================================="
+
 test-sort: sort
 	$(Q)mkdir -p $(OUT_DIR)
 
@@ -208,6 +217,9 @@ test-sort: sort
 	$(Q)echo "==========================================="
 	$(Q)echo "isort"
 	$(Q)./sort -s IS -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
+	$(Q)echo "==========================================="
+	$(Q)echo "tsort"
+	$(Q)./sort -s TS -i $(OUT_DIR)/$@.$(TST_RND_CNT).rnd $(RFLAGS)
 	$(Q)echo "==========================================="
 
 test-htable: htable-list htable-tree htable-tree-avl
