@@ -42,7 +42,7 @@ HELPERS = __helpers.c dot.c
 
 all: $(ALGOS)
 
-sort: sort.c qsort.c hsort.c msort.c ssort.c isort.c tsort.c $(HELPERS)
+sort: sort.c qsort.c heap.c hsort.c msort.c ssort.c isort.c tsort.c $(HELPERS)
 	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
 htable-list: htable.c $(HELPERS)
@@ -81,8 +81,8 @@ wq: workqueue.c notification.c $(HELPERS)
 bitfield: bitfield.h bitfield.c $(HELPERS)
 	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
 
-heap: heap.h heap.c hsort.c $(HELPERS)
-	$(Q)$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
+heap: heap.h heap.c $(HELPERS)
+	$(Q)$(CC) $^ -DHEAP_MAIN $(CFLAGS) -o $@ $(LDFLAGS)
 
 kalman: kalman.c $(HELPERS)
 	$(Q)$(CC) -DKALMAN_MAIN $^ $(CFLAGS) -o $@ $(LDFLAGS)

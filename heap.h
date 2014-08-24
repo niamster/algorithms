@@ -4,7 +4,12 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "hsort.h"
+#include "helpers.h"
+#include "sort.h"
+
+void __heap_build(void *array, unsigned int count, unsigned int size, swap_t swp, compare_t cmp);
+void __heap_push_up(void *array, unsigned int e, unsigned int count, unsigned int size, swap_t swp, compare_t cmp);
+void __heap_push_down(void *array, unsigned int e, unsigned int count, unsigned int size, swap_t swp, compare_t cmp);
 
 struct heap {
     unsigned int size;
@@ -53,9 +58,8 @@ heap_push(struct heap *heap, void *data)
 
     heap->assign(&nodes[size*nsize], data);
     ++size;
-
-    heap_sort(nodes, size, heap->nsize, heap->swp, heap->cmp);
-
+    __heap_push_up(nodes, size-1, size,
+            heap->nsize, heap->swp, heap->cmp);
     heap->size = size;
 
     return true;
@@ -87,7 +91,8 @@ heap_pop_top(struct heap *heap, void *data)
 
     if (size) {
         heap->assign(nodes, &nodes[size*nsize]);
-        heap_sort(nodes, size, heap->nsize, heap->swp, heap->cmp);
+        __heap_push_down(nodes, 0, size,
+                heap->nsize, heap->swp, heap->cmp);
     }
 
     heap->size = size;

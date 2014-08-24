@@ -10,6 +10,75 @@
 #include "helpers.h"
 #include "heap.h"
 
+void
+__heap_push_up(void *array,
+        unsigned int e,
+        unsigned int count,
+        unsigned int size,
+        swap_t swp,
+        compare_t cmp)
+{
+    unsigned int p, l, r;
+    unsigned int m;
+
+    for (;;) {
+        if (e == 0)
+            break;
+        p = (e-1)/2;
+        l = 2*p + 1;
+        r = 2*p + 2;
+        m = p;
+        if (l < count && cmp(array+l*size, array+m*size) == cmp_result_greater)
+            m = l;
+        if (r < count && cmp(array+r*size, array+m*size) == cmp_result_greater)
+            m = r;
+        if (m == p)
+            break;
+        swp(array+m*size, array+p*size);
+        e = p;
+    }
+}
+
+void
+__heap_push_down(void *array,
+        unsigned int e,
+        unsigned int count,
+        unsigned int size,
+        swap_t swp,
+        compare_t cmp)
+{
+    unsigned int l, r;
+    unsigned int m;
+
+    for (;;) {
+        l = 2*e + 1;
+        r = 2*e + 2;
+        m = e;
+        if (l < count && cmp(array+l*size, array+m*size) == cmp_result_greater)
+            m = l;
+        if (r < count && cmp(array+r*size, array+m*size) == cmp_result_greater)
+            m = r;
+        if (m == e)
+            break;
+        swp(array+m*size, array+e*size);
+        e = m;
+    }
+}
+
+void
+__heap_build(void *array,
+        unsigned int count,
+        unsigned int size,
+        swap_t swp,
+        compare_t cmp)
+{
+    // travers all parent nodes
+    long m = (count-1)/2;
+    for (;m>=0;--m)
+        __heap_push_down(array, m, count, size, swp, cmp);
+}
+
+#ifdef HEAP_MAIN
 static void
 build_heap(struct heap *heap, unsigned int *array, unsigned int count)
 {
@@ -37,7 +106,7 @@ uint_swap(void *a, void *b)
 static cmp_result_t
 uint_cmp(void *a, void *b)
 {
-    return (cmp_result_t)int_sign(*(unsigned int *)a - *(unsigned int *)b);
+    return (cmp_result_t)int_sign(*(unsigned int *)b - *(unsigned int *)a);
 }
 
 static int
@@ -178,3 +247,4 @@ int main(unsigned int argc, char **argv)
 
     return 0;
 }
+#endif
