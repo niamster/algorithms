@@ -125,9 +125,28 @@ int main(unsigned int argc, char **argv)
         printf("Heap bottom: %u\n", *el);
     }
 
+    {
+        unsigned int top, el;
+        unsigned n;
+
+        if (!heap_pop_top(&heap, &top)) {
+            fprintf(stderr, "Failed to get heap top\n");
+            goto out_heap;
+        }
+        n = 1;
+        while (heap_pop_top(&heap, &el)) {
+            ALGO_ASSERT("heap", top <= el, "heap is not ordered");
+            top = el;
+            ++n;
+        }
+        ALGO_ASSERT("heap", n == count, "wrong number of elements poped");
+    }
+
     if (dump) {
         unsigned int el;
         int i;
+
+        build_heap(&heap, array, count);
 
         i = 0;
         printf("\nPopping from heap top:\n");
