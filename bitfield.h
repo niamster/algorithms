@@ -28,7 +28,7 @@ typedef unsigned int word_t;
 #else
 #define bitfield_popcount __bitfield_popcount
 #endif
-#elif__WORDSIZE == 8
+#elif __WORDSIZE == 8
 typedef unsigned char word_t;
 #if defined(__GNUC__)
 #define bitfield_popcount __builtin_popcount
